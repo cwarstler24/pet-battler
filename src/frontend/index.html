@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pet Battler - Tournament Arena</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎮 PET BATTLER 🎮</h1>
+            <p class="subtitle">Epic Creature Tournament</p>
+        </header>
+
+        <!-- Game Setup Screen -->
+        <div id="setup-screen" class="screen active">
+            <h2>Create Your Creature</h2>
+            
+            <div class="form-group">
+                <label for="creature-name">Creature Name:</label>
+                <input type="text" id="creature-name" maxlength="50" placeholder="Enter name...">
+            </div>
+
+            <div class="form-group">
+                <label>Choose Your Creature Type:</label>
+                <div id="creature-types" class="creature-grid">
+                    <!-- Populated by JavaScript -->
+                </div>
+            </div>
+
+            <div class="form-group" id="stat-allocation" style="display: none;">
+                <label>Allocate Stat Points (6 points available):</label>
+                <div class="stat-controls">
+                    <div class="stat-row">
+                        <span>⚡ Speed:</span>
+                        <button class="stat-btn" data-stat="speed" data-change="-1">-</button>
+                        <span id="speed-value">0</span>
+                        <button class="stat-btn" data-stat="speed" data-change="1">+</button>
+                    </div>
+                    <div class="stat-row">
+                        <span>❤️ Health:</span>
+                        <button class="stat-btn" data-stat="health" data-change="-1">-</button>
+                        <span id="health-value">0</span>
+                        <button class="stat-btn" data-stat="health" data-change="1">+</button>
+                    </div>
+                    <div class="stat-row">
+                        <span>🛡️ Defense:</span>
+                        <button class="stat-btn" data-stat="defense" data-change="-1">-</button>
+                        <span id="defense-value">0</span>
+                        <button class="stat-btn" data-stat="defense" data-change="1">+</button>
+                    </div>
+                    <div class="stat-row">
+                        <span>💪 Strength:</span>
+                        <button class="stat-btn" data-stat="strength" data-change="-1">-</button>
+                        <span id="strength-value">0</span>
+                        <button class="stat-btn" data-stat="strength" data-change="1">+</button>
+                    </div>
+                    <div class="stat-row">
+                        <span>🍀 Luck:</span>
+                        <button class="stat-btn" data-stat="luck" data-change="-1">-</button>
+                        <span id="luck-value">0</span>
+                        <button class="stat-btn" data-stat="luck" data-change="1">+</button>
+                    </div>
+                </div>
+                <p class="points-remaining">Points Remaining: <span id="points-remaining">6</span></p>
+            </div>
+
+            <button id="start-game-btn" class="btn-primary" disabled>Start Tournament</button>
+        </div>
+
+        <!-- Battle Screen -->
+        <div id="battle-screen" class="screen">
+            <div class="battle-arena">
+                <div class="creature-display">
+                    <div class="creature-info player1">
+                        <h3 id="p1-name">...</h3>
+                        <div class="hp-bar">
+                            <div id="p1-hp-fill" class="hp-fill" style="width: 100%"></div>
+                        </div>
+                        <p id="p1-hp">HP: 20/20</p>
+                        <pre id="p1-ascii" class="ascii-art">...</pre>
+                    </div>
+
+                    <div class="vs-divider">
+                        <h2>VS</h2>
+                        <p>Round <span id="round-number">1</span></p>
+                    </div>
+
+                    <div class="creature-info player2">
+                        <h3 id="p2-name">...</h3>
+                        <div class="hp-bar">
+                            <div id="p2-hp-fill" class="hp-fill" style="width: 100%"></div>
+                        </div>
+                        <p id="p2-hp">HP: 20/20</p>
+                        <pre id="p2-ascii" class="ascii-art">...</pre>
+                    </div>
+                </div>
+
+                <div class="battle-log">
+                    <h3>Battle Log</h3>
+                    <div id="battle-messages"></div>
+                </div>
+
+                <div class="move-selection">
+                    <h3>Choose Your Move</h3>
+                    <div class="move-buttons">
+                        <button class="move-btn" data-move="attack">
+                            ⚔️ Attack
+                        </button>
+                        <button class="move-btn" data-move="defend">
+                            🛡️ Defend <span id="defend-uses">(3)</span>
+                        </button>
+                        <button class="move-btn" data-move="special">
+                            ✨ Special <span id="special-uses">(1)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="next-match-btn" class="btn-primary" style="display: none;">Next Match</button>
+            </div>
+        </div>
+
+        <!-- Victory Screen -->
+        <div id="victory-screen" class="screen">
+            <h2>🏆 TOURNAMENT COMPLETE! 🏆</h2>
+            <div class="champion-display">
+                <h3 id="champion-name">...</h3>
+                <pre id="champion-ascii" class="ascii-art">...</pre>
+                <p class="victory-text">IS THE CHAMPION!</p>
+            </div>
+            <button id="new-game-btn" class="btn-primary">Start New Tournament</button>
+        </div>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>
