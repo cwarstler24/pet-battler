@@ -4,7 +4,6 @@ Run the FastAPI server for the Pet Battler game.
 """
 
 import uvicorn
-from backend.app import app
 
 if __name__ == "__main__":
     print("🎮 Starting Pet Battler Server...")
@@ -13,7 +12,7 @@ if __name__ == "__main__":
     print("🏥 Health Check: http://localhost:8000/health")
     
     uvicorn.run(
-        "backend.app:app",
+        "src.backend.app:app",
         host="0.0.0.0",
         port=8000,
         reload=True,
