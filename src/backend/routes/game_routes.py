@@ -5,7 +5,7 @@ API routes for game flow and tournament management.
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List
-from ..models.game_state import GameState
+from ..models.game_state import GameState, TournamentBracket
 from ..models.move import Move, MoveType
 from ..logic.tournament import TournamentManager
 from ..logic.combat import CombatEngine
@@ -28,6 +28,28 @@ class AllocateStatsRequest(BaseModel):
     creature_id: str
     stat_allocations: dict  # e.g., {"speed": 1, "strength": 2}
 
+
+def auto_complete_ai_matches(tournament: TournamentBracket, current_round: int):
+    """Auto-complete all AI-only matches in the current round."""
+    ai_matches = [
+        m for m in tournament.matches
+        if not m.is_complete 
+        and m.bracket_round == current_round
+        and m.creature1.is_ai 
+        and m.creature2.is_ai
+    ]
+    
+    for match in ai_matches:
+        # Simulate the match - just pick a random winner for simplicity
+        import random
+        winner = random.choice([match.creature1, match.creature2])
+        loser = match.creature2 if winner == match.creature1 else match.creature1
+        
+        # Set loser HP to 0
+        loser.current_hp = 0
+        match.set_winner(winner.id)
+
+
 @router.post("/start")
 async def start_game(request: StartGameRequest):
     from .creature_routes import creatures_db
@@ -42,7 +64,7 @@ async def start_game(request: StartGameRequest):
             player_creatures=player_creatures,
             tournament_size=request.tournament_size
         )
-        
+
         import uuid
         game = GameState(
             game_id=str(uuid.uuid4()),
@@ -50,11 +72,11 @@ async def start_game(request: StartGameRequest):
             player_creatures=player_creatures,
             tournament=tournament
         )
-        
+
         games_db[game.game_id] = game
         current_match = game.get_current_match()
         match_state = None
-        
+
         if current_match:
             match_state = {
                 "match_id": current_match.match_id,
@@ -68,10 +90,12 @@ async def start_game(request: StartGameRequest):
                 "creature2_type": current_match.creature2.creature_type.value,
                 "creature2_hp": current_match.creature2.current_hp,
                 "creature2_max_hp": current_match.creature2.max_hp,
-                "current_round": current_match.current_round,
+                "turn_number": current_match.turn_number,
+                "bracket_round": current_match.bracket_round,
+                "current_round": current_match.bracket_round,
                 "is_complete": current_match.is_complete
             }
-        
+
         return {
             "game_id": game.game_id,
             "current_match": match_state,
@@ -126,7 +150,7 @@ async def submit_move(game_id: str, request: SubmitMoveRequest):
         ai_move_type = AIOpponentGenerator.decide_move(
             current_match.creature2,
             current_match.creature1,
-            current_match.current_round
+            current_match.turn_number
         )
         ai_move = Move(move_type=ai_move_type, user_id=current_match.creature2.id)
         current_match.add_move(current_match.creature2.id, ai_move)
@@ -149,7 +173,7 @@ async def submit_move(game_id: str, request: SubmitMoveRequest):
         
         # Clear pending moves
         current_match.clear_pending_moves()
-        current_match.current_round += 1
+        current_match.turn_number += 1
         
         # Check for match end
         if not creature1.is_alive():
@@ -175,8 +199,24 @@ async def submit_move(game_id: str, request: SubmitMoveRequest):
                 game.is_complete = True
                 latest_results.append("Game Over - You have been eliminated from the tournament!")
             else:
+                # Player won - auto-complete other AI-only matches in this round
+                current_round = game.tournament.current_round
+                print(f"Auto-completing AI matches for bracket round {current_round}")
+                auto_complete_ai_matches(game.tournament, current_round)
+                
+                # Check how many matches are still incomplete
+                incomplete = [m for m in game.tournament.matches if not m.is_complete and m.bracket_round == current_round]
+                print(f"Incomplete matches after auto-complete: {len(incomplete)}")
+                for m in incomplete:
+                    print(f"  - {m.creature1.name} vs {m.creature2.name}, AI1: {m.creature1.is_ai}, AI2: {m.creature2.is_ai}")
+                
                 # Player won this match - check if tournament continues
                 tournament_continues = TournamentManager.advance_tournament(game.tournament)
+                print(f"Tournament continues: {tournament_continues}, New bracket round: {game.tournament.current_round}")
+                # Bracket diagnostic summary
+                print("[Bracket Summary]")
+                for m in game.tournament.matches:
+                    print(f"  Round {m.bracket_round} | Match {m.match_id[:8]} | {m.creature1.name} vs {m.creature2.name} | complete={m.is_complete} | winner={m.winner_id}")
             
                 if not tournament_continues:
                     # Tournament complete!
@@ -232,7 +272,9 @@ async def submit_move(game_id: str, request: SubmitMoveRequest):
             "creature2_type": current_match.creature2.creature_type.value,
             "creature2_hp": current_match.creature2.current_hp,
             "creature2_max_hp": current_match.creature2.max_hp,
-            "current_round": current_match.current_round,
+            "turn_number": current_match.turn_number,
+            "bracket_round": current_match.bracket_round,
+            "current_round": current_match.bracket_round,
             "is_complete": current_match.is_complete,
             "winner_name": winner_name,
             "latest_results": latest_results
@@ -287,7 +329,9 @@ async def get_game_state(game_id: str):
             "creature2_type": current_match.creature2.creature_type.value,
             "creature2_hp": current_match.creature2.current_hp,
             "creature2_max_hp": current_match.creature2.max_hp,
-            "current_round": current_match.current_round,
+            "turn_number": current_match.turn_number,
+            "bracket_round": current_match.bracket_round,
+            "current_round": current_match.bracket_round,
             "is_complete": current_match.is_complete,
             "winner_name": winner_name
         }

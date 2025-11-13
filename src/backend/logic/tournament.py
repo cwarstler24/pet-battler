@@ -85,7 +85,7 @@ class TournamentManager:
         # Check if current round is complete
         current_round_matches = [
             m for m in bracket.matches 
-            if not m.is_complete and m.current_round == bracket.current_round
+            if not m.is_complete and m.bracket_round == bracket.current_round
         ]
         
         if current_round_matches:
@@ -94,7 +94,7 @@ class TournamentManager:
         # Get winners from completed round
         completed_matches = [
             m for m in bracket.matches 
-            if m.is_complete and m.current_round == bracket.current_round
+            if m.is_complete and m.bracket_round == bracket.current_round
         ]
         
         if not completed_matches:
@@ -121,7 +121,7 @@ class TournamentManager:
         bracket.current_round += 1
         
         for match in next_round_matches:
-            match.current_round = bracket.current_round
+            match.bracket_round = bracket.current_round
         
         bracket.matches.extend(next_round_matches)
         
@@ -133,7 +133,7 @@ class TournamentManager:
         # Find the final match
         final_matches = [
             m for m in bracket.matches 
-            if m.is_complete and m.current_round == bracket.total_rounds - 1
+            if m.is_complete and m.bracket_round == bracket.total_rounds - 1
         ]
         
         if not final_matches:

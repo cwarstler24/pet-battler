@@ -14,7 +14,10 @@ class Match(BaseModel):
     match_id: str
     creature1: Creature
     creature2: Creature
-    current_round: int = 0
+    # Turn number within this match (increments after each pair of moves)
+    turn_number: int = 0
+    # Bracket round this match belongs to (0 = first round). Set when match is created; NOT incremented per turn.
+    bracket_round: int = 0
     pending_moves: Dict[str, Move] = Field(default_factory=dict)  # creature_id -> move
     move_history: List[MoveResult] = Field(default_factory=list)
     winner_id: Optional[str] = None
@@ -56,11 +59,9 @@ class TournamentBracket(BaseModel):
                 return match
         return None
 
-    def advance_bracket(self):
-        """Advance to the next round/match in the bracket."""
-        current = self.get_current_match()
-        if current and current.is_complete:
-            self.current_round += 1
+    def advance_bracket_round(self):
+        """Increment the bracket's current round counter (after generating next round)."""
+        self.current_round += 1
 
 
 class GameState(BaseModel):
@@ -74,9 +75,28 @@ class GameState(BaseModel):
     champion_id: Optional[str] = None
 
     def get_current_match(self) -> Optional[Match]:
-        """Get the current active match."""
-        if self.tournament:
-            return self.tournament.get_current_match()
+        """Get the current active match involving a player."""
+        if not self.tournament:
+            return None
+
+        player_ids = {pc.id for pc in self.player_creatures}
+        print(f"[GameState] Player creature IDs: {list(player_ids)}")
+
+        # 1. Return the first incomplete match that involves a player creature
+        for match in self.tournament.matches:
+            if not match.is_complete:
+                print(f"[GameState] Inspecting match {match.match_id}: {match.creature1.name} ({match.creature1.id}) vs {match.creature2.name} ({match.creature2.id})")
+                if match.creature1.id in player_ids or match.creature2.id in player_ids:
+                    print(f"[GameState] -> Returning player-involved match {match.match_id}")
+                    return match
+
+        # 2. Fallback: return first incomplete AI-only match (needed for auto-resolution)
+        for match in self.tournament.matches:
+            if not match.is_complete:
+                print(f"[GameState] -> No player match; returning AI-only match {match.match_id}")
+                return match
+
+        print("[GameState] -> No incomplete matches remain")
         return None
 
     def is_tournament_complete(self) -> bool:
