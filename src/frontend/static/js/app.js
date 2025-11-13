@@ -438,16 +438,19 @@ function updateBattleDisplay(messages = []) {
     document.getElementById('p2-ascii').textContent = CREATURE_ASCII[p2Type] || CREATURE_ASCII.default;
 
     // Add messages to battle log
+    const logContainer = document.getElementById('battle-messages');
     if (messages && messages.length > 0) {
-        const logContainer = document.getElementById('battle-messages');
         messages.forEach(msg => {
             const msgDiv = document.createElement('div');
             msgDiv.className = 'battle-message';
             msgDiv.textContent = msg;
-            logContainer.appendChild(msgDiv);
+            logContainer.insertBefore(msgDiv, logContainer.firstChild);
         });
-        logContainer.scrollTop = logContainer.scrollHeight;
     }
+    // Always scroll to bottom after DOM update
+    setTimeout(() => {
+        logContainer.scrollTop = logContainer.scrollHeight * -1;
+    }, 0);
 }
 
 // Update HP bar
