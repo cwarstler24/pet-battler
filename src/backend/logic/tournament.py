@@ -32,6 +32,14 @@ class TournamentManager:
         
         # Calculate number of AI opponents needed
         num_ai = tournament_size - len(player_creatures)
+
+        # IMPORTANT: Reset player creatures' state for a fresh tournament.
+        # Without this, a creature that finished a prior tournament at 0 HP or
+        # with exhausted defend/special uses would be unable to act in the new
+        # tournament's first match, effectively soft-locking gameplay.
+        for pc in player_creatures:
+            pc.current_hp = pc.max_hp
+            pc.reset_round_resources()
         
         # Generate AI opponents
         ai_creatures = []
@@ -40,7 +48,7 @@ class TournamentManager:
             ai_creature = AIOpponentGenerator.generate_ai_creature(difficulty_level=difficulty)
             ai_creatures.append(ai_creature)
         
-        # Combine and shuffle all creatures
+        # Combine (could shuffle here in future for randomness)
         all_creatures = player_creatures + ai_creatures
         
         # Create initial round matches
@@ -85,7 +93,7 @@ class TournamentManager:
         # Check if current round is complete
         current_round_matches = [
             m for m in bracket.matches 
-            if not m.is_complete and m.current_round == bracket.current_round
+            if not m.is_complete and m.bracket_round == bracket.current_round
         ]
         
         if current_round_matches:
@@ -94,7 +102,7 @@ class TournamentManager:
         # Get winners from completed round
         completed_matches = [
             m for m in bracket.matches 
-            if m.is_complete and m.current_round == bracket.current_round
+            if m.is_complete and m.bracket_round == bracket.current_round
         ]
         
         if not completed_matches:
@@ -121,7 +129,7 @@ class TournamentManager:
         bracket.current_round += 1
         
         for match in next_round_matches:
-            match.current_round = bracket.current_round
+            match.bracket_round = bracket.current_round
         
         bracket.matches.extend(next_round_matches)
         
@@ -133,7 +141,7 @@ class TournamentManager:
         # Find the final match
         final_matches = [
             m for m in bracket.matches 
-            if m.is_complete and m.current_round == bracket.total_rounds - 1
+            if m.is_complete and m.bracket_round == bracket.total_rounds - 1
         ]
         
         if not final_matches:
