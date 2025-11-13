@@ -10,7 +10,7 @@ if __name__ == "__main__":
     print("📍 Frontend: http://localhost:8000")
     print("📚 API Docs: http://localhost:8000/docs")
     print("🏥 Health Check: http://localhost:8000/health")
-    
+
     uvicorn.run(
         "src.backend.app:app",
         host="0.0.0.0",

@@ -2,20 +2,18 @@
 API routes for creature management.
 """
 
+from typing import List, Dict, Optional
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
-from typing import List, Dict, Optional
 from ..models.creature import Creature, CreatureType, CREATURE_STAT_BIASES
 
 router = APIRouter(prefix="/creatures", tags=["creatures"])
-
 
 class CreateCreatureRequest(BaseModel):
     """Request model for creating a new creature."""
     name: str = Field(min_length=1, max_length=50)
     creature_type: CreatureType
     stat_allocations: Optional[Dict[str, int]] = None
-
 
 class CreatureResponse(BaseModel):
     """Response model for creature data."""
@@ -28,22 +26,19 @@ class CreatureResponse(BaseModel):
     defend_uses: int
     special_uses: int
 
-
 class CreatureTypeInfo(BaseModel):
     """Information about a creature type."""
     type: CreatureType
     stat_biases: Dict[str, int]
     description: str
 
-
 # In-memory storage (replace with database in production)
 creatures_db: Dict[str, Creature] = {}
-
 
 @router.get("/types", response_model=List[CreatureTypeInfo])
 async def get_creature_types():
     """Get all available creature types with their stat biases."""
-    
+
     descriptions = {
         CreatureType.DRAGON: "High health and strength, but slower. Breathes fire!",
         CreatureType.OWLBEAR: "Strong and defensive, balanced fighter.",
@@ -58,7 +53,7 @@ async def get_creature_types():
         CreatureType.JACOB: "Mysterious and balanced.",
         CreatureType.BEYBLADE: "Extremely fast but fragile, let it rip!",
     }
-    
+
     return [
         CreatureTypeInfo(
             type=creature_type,
@@ -68,11 +63,10 @@ async def get_creature_types():
         for creature_type in CreatureType
     ]
 
-
 @router.post("", response_model=CreatureResponse, status_code=201)
 async def create_creature(request: CreateCreatureRequest):
     """Create a new creature with custom stats."""
-    
+
     try:
         # Validate stat allocations
         if request.stat_allocations:
@@ -82,7 +76,7 @@ async def create_creature(request: CreateCreatureRequest):
                     status_code=400,
                     detail=f"Cannot allocate more than 6 stat points (you used {total_points})"
                 )
-        
+
         # Create creature
         creature = Creature.create_with_biases(
             name=request.name,
@@ -90,12 +84,12 @@ async def create_creature(request: CreateCreatureRequest):
             stat_allocations=request.stat_allocations,
             is_ai=False
         )
-        
+
         # Generate ID and store
         import uuid
         creature.id = str(uuid.uuid4())
         creatures_db[creature.id] = creature
-        
+
         return CreatureResponse(
             id=creature.id,
             name=creature.name,
@@ -112,7 +106,7 @@ async def create_creature(request: CreateCreatureRequest):
             defend_uses=creature.defend_uses_remaining,
             special_uses=creature.special_uses_remaining,
         )
-        
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -120,12 +114,12 @@ async def create_creature(request: CreateCreatureRequest):
 @router.get("/{creature_id}", response_model=CreatureResponse)
 async def get_creature(creature_id: str):
     """Get a specific creature by ID."""
-    
+
     if creature_id not in creatures_db:
         raise HTTPException(status_code=404, detail="Creature not found")
-    
+
     creature = creatures_db[creature_id]
-    
+
     return CreatureResponse(
         id=creature.id,
         name=creature.name,
@@ -143,11 +137,10 @@ async def get_creature(creature_id: str):
         special_uses=creature.special_uses_remaining,
     )
 
-
 @router.get("", response_model=List[CreatureResponse])
 async def list_creatures():
     """List all created creatures."""
-    
+
     return [
         CreatureResponse(
             id=creature.id,
