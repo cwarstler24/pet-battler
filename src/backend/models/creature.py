@@ -23,11 +23,11 @@ class CreatureType(str, Enum):
 
 class CreatureStats(BaseModel):
     """Base statistics for a creature (1-20 range)."""
-    speed: int = Field(ge=1, le=20, description="Affects dodge chance")
-    health: int = Field(ge=1, le=20, description="Maximum hit points")
-    defense: int = Field(ge=1, le=20, description="Damage reduction percentage")
-    strength: int = Field(ge=1, le=20, description="Damage dealing percentage")
-    luck: int = Field(ge=1, le=20, description="Critical strike chance")
+    speed: int = Field(gt=0, lt=21, description="Affects dodge chance")
+    health: int = Field(gt=0, lt=21, description="Maximum hit points")
+    defense: int = Field(gt=0, lt=21, description="Damage reduction percentage")
+    strength: int = Field(gt=0, lt=21, description="Damage dealing percentage")
+    luck: int = Field(gt=0, lt=21, description="Critical strike chance")
 
 # Stat biases for each creature type (modifiers applied to base stats)
 CREATURE_STAT_BIASES: Dict[CreatureType, Dict[str, int]] = {
@@ -52,12 +52,12 @@ class Creature(BaseModel):
     creature_type: CreatureType
     base_stats: CreatureStats
     current_hp: int = Field(ge=0)
-    max_hp: int = Field(ge=1, le=20)
+    max_hp: int = Field(gt=0, lt=21)
     is_ai: bool = False
 
     # Round-specific resource tracking
-    defend_uses_remaining: int = Field(default=3, ge=0, le=3)
-    special_uses_remaining: int = Field(default=1, ge=0, le=1)
+    defend_uses_remaining: int = Field(default=3, gt=-1, lt=4)
+    special_uses_remaining: int = Field(default=1, gt=-1, lt=2)
 
     @field_validator('current_hp')
     @classmethod
@@ -84,12 +84,12 @@ class Creature(BaseModel):
             stat_allocations: Player-allocated stat points (max 6 total)
             is_ai: Whether this is an AI-controlled creature
         """
-        # Start with base stats (10 for each)
+        # Start with base stats (20 for health, 15 for defense, 8 for strength)
         base_stats = {
             "speed": 10,
-            "health": 10,
-            "defense": 10,
-            "strength": 10,
+            "health": 20,
+            "defense": 15,
+            "strength": 8,
             "luck": 10
         }
 
