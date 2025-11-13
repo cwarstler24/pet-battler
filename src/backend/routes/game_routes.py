@@ -4,6 +4,7 @@ API routes for game flow and tournament management.
 
 from typing import List
 from fastapi import APIRouter, HTTPException
+from ..logic.narrator import NarratorAgent
 from pydantic import BaseModel
 from ..models.game_state import GameState, TournamentBracket
 from ..models.move import Move, MoveType
@@ -117,6 +118,7 @@ async def start_game(request: StartGameRequest):
 
 @router.post("/{game_id}/move")
 async def submit_move(game_id: str, request: SubmitMoveRequest):
+    narrator = NarratorAgent(model="gpt-4-1106-preview")
     """Submit a move for a creature in the current match."""
 
     if game_id not in games_db:
@@ -205,10 +207,25 @@ async def submit_move(game_id: str, request: SubmitMoveRequest):
         # Execute combat
         result1, result2 = CombatEngine.execute_moves(creature1, move1, creature2, move2)
 
+
         # Store results
         current_match.move_history.append(result1)
         current_match.move_history.append(result2)
         latest_results = [result1.message, result2.message]
+
+        # --- Narration Integration ---
+        narration_event = {
+            "round": current_match.turn_number + 1,  # since we increment after
+            "creature1": creature1.name,
+            "creature2": creature2.name,
+            "move1": move1.move_type.name.title(),
+            "move2": move2.move_type.name.title(),
+            "result": f"{result1.message} {result2.message}",
+            "creature1_hp": creature1.current_hp,
+            "creature2_hp": creature2.current_hp
+        }
+        narration = narrator.generate_narration(narration_event)
+        # --- End Narration Integration ---
 
         # Clear pending moves
         current_match.clear_pending_moves()
@@ -313,7 +330,7 @@ async def submit_move(game_id: str, request: SubmitMoveRequest):
             "creature2_max_hp": current_match.creature2.max_hp,
             "turn_number": current_match.turn_number,
             "bracket_round": current_match.bracket_round,
-            "current_round": current_match.bracket_round,
+            "current_round": current_match.turn_number,
             "is_complete": current_match.is_complete,
             "winner_name": winner_name,
             "latest_results": latest_results
@@ -334,7 +351,8 @@ async def submit_move(game_id: str, request: SubmitMoveRequest):
         "player_won_match": player_won_match,
         "stat_points_available": stat_points_available,
         "match_just_completed": match_just_completed,
-        "current_stats": current_stats
+        "current_stats": current_stats,
+        "narration": narration if 'narration' in locals() else None
     }
 
 
@@ -370,7 +388,7 @@ async def get_game_state(game_id: str):
             "creature2_max_hp": current_match.creature2.max_hp,
             "turn_number": current_match.turn_number,
             "bracket_round": current_match.bracket_round,
-            "current_round": current_match.bracket_round,
+            "current_round": current_match.turn_number,
             "is_complete": current_match.is_complete,
             "winner_name": winner_name
         }

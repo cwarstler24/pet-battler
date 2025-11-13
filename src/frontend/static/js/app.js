@@ -13,7 +13,9 @@ let gameState = {
     gameId: null,
     currentMatch: null,
     creature1Type: null,
-    creature2Type: null
+    creature2Type: null,
+    defendUses: 3,
+    specialUses: 1
 };
 
 // ASCII Art for creatures (compact versions)
@@ -532,12 +534,22 @@ async function createCreatureAndStartGame() {
 
 // Submit move
 async function submitMove(moveType) {
+    // Decrement uses and update UI immediately
+    if (moveType === 'defend' && gameState.defendUses > 0) {
+        gameState.defendUses--;
+        document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+    }
+    if (moveType === 'special' && gameState.specialUses > 0) {
+        gameState.specialUses--;
+        document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
+    }
     if (!gameState.gameId || !gameState.creatureId) return;
 
     // Disable buttons
     document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
 
     try {
+        const narratorStart = performance.now();
         const response = await fetch(`${API_BASE}/game/${gameState.gameId}/move`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -546,16 +558,13 @@ async function submitMove(moveType) {
                 move_type: moveType
             })
         });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-            console.error('Move submission failed:', errorData);
-            throw new Error(errorData.detail || 'Failed to submit move');
-        }
+        const narratorEnd = performance.now();
+        const narratorDuration = narratorEnd - narratorStart;
+        console.log(`[Narrator API] Response time: ${narratorDuration.toFixed(2)} ms`);
 
         const result = await response.json();
         gameState.currentMatch = result.current_match;
-        
+
         // Update opponent's creature type if available
         if (result.current_match) {
             gameState.creature2Type = result.current_match.creature2_type;
@@ -564,13 +573,28 @@ async function submitMove(moveType) {
         // Update display with results
         updateBattleDisplay(result.current_match?.latest_results);
 
+        // Display LLM narration in narrator box
+        const narratorBox = document.getElementById('narrator-message');
+        if (narratorBox) {
+            narratorBox.textContent = result.narration || '';
+        }
+
+        // Store last battle narration for victory/defeat/levelup screens
+        gameState.lastBattleNarration = result.last_battle_narration || result.narration || '';
+
         // Check if match is complete
         if (result.tournament_complete) {
             showVictoryScreen(result.champion_name);
         } else if (result.match_just_completed) {
             // A match just finished - check if player won or lost
             const playerWon = result.player_won_match;
-            
+
+            // Show narration on level-up screen
+            const levelupNarratorBox = document.getElementById('levelup-narrator-message');
+            if (levelupNarratorBox) {
+                levelupNarratorBox.textContent = gameState.lastBattleNarration;
+            }
+
             if (playerWon && result.stat_points_available > 0) {
                 // Player won - show level-up screen
                 showLevelUpScreen(result.current_stats);
@@ -588,7 +612,6 @@ async function submitMove(moveType) {
                 ensureMoveButtonsEnabled();
             }, 1000);
         }
-
     } catch (error) {
         console.error('Error submitting move:', error);
         alert('Failed to submit move: ' + error.message);
@@ -598,6 +621,9 @@ async function submitMove(moveType) {
 
 // Update battle display
 function updateBattleDisplay(messages = []) {
+    // Update move uses UI
+    document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+    document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
     const match = gameState.currentMatch;
     if (!match) return;
 
@@ -670,6 +696,15 @@ async function loadCurrentMatch() {
         const response = await fetch(`${API_BASE}/game/${gameState.gameId}/state`);
         const result = await response.json();
 
+        // Clear the levelup and victory narrator boxes so old narration doesn't persist
+        const narratorBox = document.getElementById('levelup-narrator-message');
+        if (narratorBox) narratorBox.textContent = '';
+        const victoryNarratorBox = document.getElementById('victory-narrator-message');
+        if (victoryNarratorBox) victoryNarratorBox.textContent = '';
+        // Also clear the main battle narrator box
+        const battleNarratorBox = document.getElementById('narrator-message');
+        if (battleNarratorBox) battleNarratorBox.textContent = '';
+
         console.log('Loading match:', result.current_match);
         console.log('Player name:', gameState.creatureName);
 
@@ -677,7 +712,6 @@ async function loadCurrentMatch() {
             showVictoryScreen(result.champion_name);
         } else {
             gameState.currentMatch = result.current_match;
-            
             // Update which creature is the player's in this match
             if (result.current_match) {
                 // The player's creature might be creature1 or creature2 depending on bracket
@@ -697,11 +731,14 @@ async function loadCurrentMatch() {
                 console.log('Player creature type:', gameState.creature1Type);
                 console.log('Opponent creature type:', gameState.creature2Type);
             }
-            
             document.getElementById('battle-messages').innerHTML = '';
+            // Reset move uses for new match
+            gameState.defendUses = 3;
+            gameState.specialUses = 1;
+            document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+            document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
             document.getElementById('next-match-btn').style.display = 'none';
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
-            
             // Switch to battle screen
             switchScreen('battle-screen');
             updateBattleDisplay();
@@ -730,7 +767,8 @@ function showLevelUpScreen(currentStats) {
     });
     document.getElementById('levelup-points-remaining').textContent = '3';
     document.getElementById('continue-tournament-btn').disabled = true;
-    
+
+    // Narration already set in submitMove
     switchScreen('levelup-screen');
 }
 
@@ -763,14 +801,19 @@ async function submitStatAllocations() {
 
 // Show victory screen
 function showVictoryScreen(championName) {
+    // Reset move uses for new tournament
+    gameState.defendUses = 3;
+    gameState.specialUses = 1;
+    document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+    document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
     switchScreen('victory-screen');
     document.getElementById('champion-name').textContent = championName;
-    
+
     // Determine if player won or lost
     const playerWon = championName === gameState.creatureName;
     const asciiType = playerWon ? gameState.creature1Type : 'default';
     document.getElementById('champion-ascii').textContent = CREATURE_ASCII[asciiType] || CREATURE_ASCII.default;
-    
+
     // Update victory text based on result
     const victoryText = document.querySelector('.victory-text');
     if (playerWon) {
@@ -780,6 +823,14 @@ function showVictoryScreen(championName) {
         victoryText.textContent = 'Better luck next time!';
         victoryText.style.color = 'var(--danger-color)';
     }
+
+    // Show last narration in the victory narrator box if available
+    const victoryNarratorBox = document.getElementById('victory-narrator-message');
+    if (victoryNarratorBox && gameState.lastBattleNarration) {
+        victoryNarratorBox.textContent = gameState.lastBattleNarration;
+    } else if (victoryNarratorBox) {
+        victoryNarratorBox.textContent = '';
+    }
 }
 
 // Switch between screens
@@ -788,6 +839,11 @@ function switchScreen(screenId) {
         screen.classList.remove('active');
     });
     document.getElementById(screenId).classList.add('active');
+    // Always update move uses UI when showing battle screen
+    if (screenId === 'battle-screen') {
+        document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+        document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
+    }
     // Toggle battle-only zoom
     const battleScreen = document.getElementById('battle-screen');
     if (battleScreen) {
@@ -811,8 +867,12 @@ function resetGame() {
         gameId: null,
         currentMatch: null,
         creature1Type: null,
-        creature2Type: null
+        creature2Type: null,
+        defendUses: 3,
+        specialUses: 1
     };
+    document.getElementById('defend-uses').textContent = `(3)`;
+    document.getElementById('special-uses').textContent = `(1)`;
 
     // Reset UI
     document.getElementById('creature-name').value = '';
@@ -824,6 +884,14 @@ function resetGame() {
     document.getElementById('points-remaining').textContent = '6';
     document.getElementById('battle-messages').innerHTML = '';
     document.getElementById('next-match-btn').style.display = 'none';
+
+    // Clear narrator boxes
+    const victoryNarratorBox = document.getElementById('victory-narrator-message');
+    if (victoryNarratorBox) victoryNarratorBox.textContent = '';
+    const levelupNarratorBox = document.getElementById('levelup-narrator-message');
+    if (levelupNarratorBox) levelupNarratorBox.textContent = '';
+    const battleNarratorBox = document.getElementById('narrator-message');
+    if (battleNarratorBox) battleNarratorBox.textContent = '';
 
     // Re-enable move buttons (may have been disabled at end of previous tournament)
     ensureMoveButtonsEnabled();

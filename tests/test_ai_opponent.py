@@ -3,33 +3,34 @@ from src.backend.logic.ai_opponent import AIOpponentGenerator
 from src.backend.models.creature import Creature, CreatureType
 from src.backend.models.move import MoveType
 
-def make_creature(hp=100, max_hp=100, defend_uses=1, special_uses=1, strength=10):
+def make_creature(hp=20, max_hp=20, defend_uses=1, special_uses=1, strength=10):
     c = Creature(
         name="TestAI",
         creature_type=CreatureType.DRAGON,
         base_stats={'strength': strength, 'defense': 5, 'speed': 5, 'health': max_hp, 'luck': 1},
         stat_allocations={'strength': strength, 'defense': 5, 'speed': 5, 'health': max_hp, 'luck': 1},
-        is_ai=True
+        is_ai = True,
+        current_hp = hp,
+        max_hp = max_hp
     )
-    c.current_hp = hp
-    c.max_hp = max_hp
     c.defend_uses_remaining = defend_uses
     c.special_uses_remaining = special_uses
     return c
 
-def make_opponent(hp=100, max_hp=100, strength=10):
+def make_opponent(hp=20, max_hp=20, strength=10):
     o = Creature(
         name="Opponent",
         creature_type=CreatureType.OWLBEAR,
         base_stats={'strength': strength, 'defense': 5, 'speed': 5, 'health': max_hp, 'luck': 1},
         stat_allocations={'strength': strength, 'defense': 5, 'speed': 5, 'health': max_hp, 'luck': 1},
-        is_ai=False
+        is_ai=False,
+        current_hp = hp,
+        max_hp = max_hp
     )
-    o.current_hp = hp
-    o.max_hp = max_hp
     return o
 
 def test_decide_move_typical():
+    """Test that AI opponent can decide a move under typical conditions."""
     ai = make_creature()
     opp = make_opponent()
     move = AIOpponentGenerator.decide_move(ai, opp, round_num=1)

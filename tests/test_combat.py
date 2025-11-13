@@ -40,8 +40,8 @@ class TestCombatEngine(unittest.TestCase):
 
     def test_attack_move_damage_range(self):
         result = CombatEngine._execute_attack(self.creature1, self.creature2, self.defend_move)
-        self.assertGreaterEqual(result.damage_dealt or 0, 1)
-        self.assertLessEqual(result.damage_dealt or 0, self.creature2.max_hp)
+        self.assertGreaterEqual(result.damage_dealt, 1)
+        self.assertLessEqual(result.damage_dealt, self.creature2.max_hp)
 
     def test_defend_move_resource_limit(self):
         self.creature1.defend_uses_remaining = 0
