@@ -649,6 +649,14 @@ function resetGame() {
     document.getElementById('battle-messages').innerHTML = '';
     document.getElementById('next-match-btn').style.display = 'none';
 
+    // Clear narrator boxes
+    const victoryNarratorBox = document.getElementById('victory-narrator-message');
+    if (victoryNarratorBox) victoryNarratorBox.textContent = '';
+    const levelupNarratorBox = document.getElementById('levelup-narrator-message');
+    if (levelupNarratorBox) levelupNarratorBox.textContent = '';
+    const battleNarratorBox = document.getElementById('narrator-message');
+    if (battleNarratorBox) battleNarratorBox.textContent = '';
+
     // Re-enable move buttons (may have been disabled at end of previous tournament)
     ensureMoveButtonsEnabled();
     switchScreen('setup-screen');
