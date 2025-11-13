@@ -359,7 +359,7 @@ async function submitMove(moveType) {
 
         const result = await response.json();
         gameState.currentMatch = result.current_match;
-        
+
         // Update opponent's creature type if available
         if (result.current_match) {
             gameState.creature2Type = result.current_match.creature2_type;
@@ -368,13 +368,19 @@ async function submitMove(moveType) {
         // Update display with results
         updateBattleDisplay(result.current_match?.latest_results);
 
+        // Display LLM narration in narrator box
+        const narratorBox = document.getElementById('narrator-message');
+        if (narratorBox) {
+            narratorBox.textContent = result.narration || '';
+        }
+
         // Check if match is complete
         if (result.tournament_complete) {
             showVictoryScreen(result.champion_name);
         } else if (result.match_just_completed) {
             // A match just finished - check if player won or lost
             const playerWon = result.player_won_match;
-            
+
             if (playerWon && result.stat_points_available > 0) {
                 // Player won - show level-up screen
                 showLevelUpScreen(result.current_stats);
