@@ -114,9 +114,16 @@ async def submit_move(game_id: str, request: SubmitMoveRequest):
     
     game = games_db[game_id]
     current_match = game.get_current_match()
-    
+
     if not current_match:
-        raise HTTPException(status_code=400, detail="No active match")
+        # Added diagnostic detail to help trace post-tournament / new game issues
+        print(f"[Move] No active match for game {game_id}. is_complete={game.is_complete}. Tournament present={game.tournament is not None}")
+        if game.tournament:
+            incomplete = [m.match_id for m in game.tournament.matches if not m.is_complete]
+            print(f"[Move] Incomplete match IDs: {incomplete}")
+            if not incomplete:
+                print("[Move] All matches complete - client may be using an old game_id after tournament end.")
+        raise HTTPException(status_code=400, detail="No active match - ensure you've started a NEW game after finishing a tournament.")
     
     if current_match.is_complete:
         raise HTTPException(status_code=400, detail="Current match is complete")

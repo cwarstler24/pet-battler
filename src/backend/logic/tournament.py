@@ -32,6 +32,14 @@ class TournamentManager:
         
         # Calculate number of AI opponents needed
         num_ai = tournament_size - len(player_creatures)
+
+        # IMPORTANT: Reset player creatures' state for a fresh tournament.
+        # Without this, a creature that finished a prior tournament at 0 HP or
+        # with exhausted defend/special uses would be unable to act in the new
+        # tournament's first match, effectively soft-locking gameplay.
+        for pc in player_creatures:
+            pc.current_hp = pc.max_hp
+            pc.reset_round_resources()
         
         # Generate AI opponents
         ai_creatures = []
@@ -40,7 +48,7 @@ class TournamentManager:
             ai_creature = AIOpponentGenerator.generate_ai_creature(difficulty_level=difficulty)
             ai_creatures.append(ai_creature)
         
-        # Combine and shuffle all creatures
+        # Combine (could shuffle here in future for randomness)
         all_creatures = player_creatures + ai_creatures
         
         # Create initial round matches

@@ -324,9 +324,10 @@ async function createCreatureAndStartGame() {
             }
         }
 
-        // Switch to battle screen
-        switchScreen('battle-screen');
-        updateBattleDisplay();
+    // Switch to battle screen and ensure move buttons are enabled for first action
+    switchScreen('battle-screen');
+    ensureMoveButtonsEnabled();
+    updateBattleDisplay();
 
     } catch (error) {
         console.error('Error starting game:', error);
@@ -389,14 +390,14 @@ async function submitMove(moveType) {
         } else {
             // Re-enable move buttons for next round
             setTimeout(() => {
-                document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+                ensureMoveButtonsEnabled();
             }, 1000);
         }
 
     } catch (error) {
         console.error('Error submitting move:', error);
         alert('Failed to submit move: ' + error.message);
-        document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+        ensureMoveButtonsEnabled();
     }
 }
 
@@ -617,5 +618,12 @@ function resetGame() {
     document.getElementById('battle-messages').innerHTML = '';
     document.getElementById('next-match-btn').style.display = 'none';
 
+    // Re-enable move buttons (may have been disabled at end of previous tournament)
+    ensureMoveButtonsEnabled();
     switchScreen('setup-screen');
+}
+
+// Ensure all move buttons are enabled (utility for new games / rounds / error recovery)
+function ensureMoveButtonsEnabled() {
+    document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
 }
