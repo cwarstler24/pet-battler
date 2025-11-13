@@ -8,13 +8,13 @@ def make_creature(name="Test", cid=None):
     c = Creature(
         name=name,
         creature_type=CreatureType.DRAGON,
-        base_stats={'strength': 10, 'defense': 5, 'speed': 5, 'health': 100, 'luck': 1},
-        stat_allocations={'strength': 10, 'defense': 5, 'speed': 5, 'health': 100, 'luck': 1},
-        is_ai=False
+        base_stats={'strength': 10, 'defense': 5, 'speed': 5, 'health': 20, 'luck': 1},
+        stat_allocations={'strength': 10, 'defense': 5, 'speed': 5, 'health': 20, 'luck': 1},
+        is_ai=False,
+        current_hp = 20,
+        max_hp = 20,
     )
     c.id = cid or name
-    c.current_hp = 100
-    c.max_hp = 100
     c.defend_uses_remaining = 1
     c.special_uses_remaining = 1
     return c
