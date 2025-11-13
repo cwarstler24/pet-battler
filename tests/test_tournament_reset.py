@@ -1,7 +1,9 @@
 """Tests that starting a new tournament resets player creature state enabling moves."""
 
+from typing import cast, List
 from src.backend.logic.tournament import TournamentManager
 from src.backend.models.creature import Creature, CreatureType
+from src.backend.models.game_state import Match
 
 
 def test_tournament_resets_player_creature_state():
@@ -24,6 +26,8 @@ def test_tournament_resets_player_creature_state():
     assert creature.special_uses_remaining == 1, "Special uses should reset to 1"
 
     # Sanity: creature appears in first match
-    assert bracket.matches, "Bracket should have matches"
-    first_match = bracket.matches[0]
+    matches = cast(List[Match], bracket.matches)
+    assert matches, "Bracket should have matches"
+    assert len(matches) > 0, "Bracket should have at least one match"
+    first_match = matches[0]
     assert first_match.creature1 == creature or first_match.creature2 == creature, "Player creature should be placed in a match"
