@@ -10,7 +10,7 @@ class NarratorAgent:
 	Creature Battle Narrator using OpenAI GPT
 	"""
 
-	def __init__(self, model: str = "gpt-5-mini"):
+	def __init__(self, model: str = "gpt-4-1106-preview"):
 		api_key = os.getenv("OPENAI_API_KEY")
 		if not api_key:
 			raise ValueError("OPENAI_API_KEY not found in environment variables.")

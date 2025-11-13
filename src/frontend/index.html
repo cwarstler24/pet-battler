@@ -132,7 +132,13 @@
             <div class="levelup-display">
                 <p class="levelup-message">You defeated your opponent!</p>
                 <p class="levelup-bonus">You gained <strong>3 stat points</strong> to allocate!</p>
-                
+
+                <!-- Narrator box for level-up screen -->
+                <div class="narrator-box">
+                    <h3>Narrator</h3>
+                    <div id="levelup-narrator-message" class="narrator-message"></div>
+                </div>
+
                 <div class="form-group">
                     <label>Allocate Your Stat Points (3 points available):</label>
                     <div class="stat-controls">
@@ -174,7 +180,7 @@
                     </div>
                     <p class="points-remaining">Points Remaining: <span id="levelup-points-remaining">3</span></p>
                 </div>
-                
+
                 <button id="continue-tournament-btn" class="btn-primary" disabled>Continue to Next Match</button>
             </div>
         </div>
@@ -186,6 +192,11 @@
                 <h3 id="champion-name">...</h3>
                 <pre id="champion-ascii" class="ascii-art">...</pre>
                 <p class="victory-text">IS THE CHAMPION!</p>
+            </div>
+            <!-- Narrator box for victory screen -->
+            <div class="narrator-box">
+                <h3>Narrator</h3>
+                <div id="victory-narrator-message" class="narrator-message"></div>
             </div>
             <button id="new-game-btn" class="btn-primary">Start New Tournament</button>
         </div>

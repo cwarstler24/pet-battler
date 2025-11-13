@@ -215,7 +215,7 @@ async def submit_move(game_id: str, request: SubmitMoveRequest):
 
         # --- Narration Integration ---
         narration_event = {
-            "round": current_match.current_round + 1,  # since we increment after
+            "round": current_match.turn_number + 1,  # since we increment after
             "creature1": creature1.name,
             "creature2": creature2.name,
             "move1": move1.move_type.name.title(),
@@ -330,7 +330,7 @@ async def submit_move(game_id: str, request: SubmitMoveRequest):
             "creature2_max_hp": current_match.creature2.max_hp,
             "turn_number": current_match.turn_number,
             "bracket_round": current_match.bracket_round,
-            "current_round": current_match.bracket_round,
+            "current_round": current_match.turn_number,
             "is_complete": current_match.is_complete,
             "winner_name": winner_name,
             "latest_results": latest_results
@@ -388,7 +388,7 @@ async def get_game_state(game_id: str):
             "creature2_max_hp": current_match.creature2.max_hp,
             "turn_number": current_match.turn_number,
             "bracket_round": current_match.bracket_round,
-            "current_round": current_match.bracket_round,
+            "current_round": current_match.turn_number,
             "is_complete": current_match.is_complete,
             "winner_name": winner_name
         }

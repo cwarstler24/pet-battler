@@ -13,7 +13,8 @@ let gameState = {
     gameId: null,
     currentMatch: null,
     creature1Type: null,
-    creature2Type: null
+    creature2Type: null,
+    lastBattleNarration: '' // Store last battle narration for victory/defeat/levelup screens
 };
 
 // ASCII Art for creatures
@@ -343,6 +344,7 @@ async function submitMove(moveType) {
     document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
 
     try {
+        const narratorStart = performance.now();
         const response = await fetch(`${API_BASE}/game/${gameState.gameId}/move`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -351,12 +353,9 @@ async function submitMove(moveType) {
                 move_type: moveType
             })
         });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-            console.error('Move submission failed:', errorData);
-            throw new Error(errorData.detail || 'Failed to submit move');
-        }
+        const narratorEnd = performance.now();
+        const narratorDuration = narratorEnd - narratorStart;
+        console.log(`[Narrator API] Response time: ${narratorDuration.toFixed(2)} ms`);
 
         const result = await response.json();
         gameState.currentMatch = result.current_match;
@@ -375,12 +374,21 @@ async function submitMove(moveType) {
             narratorBox.textContent = result.narration || '';
         }
 
+        // Store last battle narration for victory/defeat/levelup screens
+        gameState.lastBattleNarration = result.last_battle_narration || result.narration || '';
+
         // Check if match is complete
         if (result.tournament_complete) {
             showVictoryScreen(result.champion_name);
         } else if (result.match_just_completed) {
             // A match just finished - check if player won or lost
             const playerWon = result.player_won_match;
+
+            // Show narration on level-up screen
+            const levelupNarratorBox = document.getElementById('levelup-narrator-message');
+            if (levelupNarratorBox) {
+                levelupNarratorBox.textContent = gameState.lastBattleNarration;
+            }
 
             if (playerWon && result.stat_points_available > 0) {
                 // Player won - show level-up screen
@@ -399,7 +407,6 @@ async function submitMove(moveType) {
                 ensureMoveButtonsEnabled();
             }, 1000);
         }
-
     } catch (error) {
         console.error('Error submitting move:', error);
         alert('Failed to submit move: ' + error.message);
@@ -481,6 +488,15 @@ async function loadCurrentMatch() {
         const response = await fetch(`${API_BASE}/game/${gameState.gameId}/state`);
         const result = await response.json();
 
+        // Clear the levelup and victory narrator boxes so old narration doesn't persist
+        const narratorBox = document.getElementById('levelup-narrator-message');
+        if (narratorBox) narratorBox.textContent = '';
+        const victoryNarratorBox = document.getElementById('victory-narrator-message');
+        if (victoryNarratorBox) victoryNarratorBox.textContent = '';
+        // Also clear the main battle narrator box
+        const battleNarratorBox = document.getElementById('narrator-message');
+        if (battleNarratorBox) battleNarratorBox.textContent = '';
+
         console.log('Loading match:', result.current_match);
         console.log('Player name:', gameState.creatureName);
 
@@ -488,7 +504,6 @@ async function loadCurrentMatch() {
             showVictoryScreen(result.champion_name);
         } else {
             gameState.currentMatch = result.current_match;
-            
             // Update which creature is the player's in this match
             if (result.current_match) {
                 // The player's creature might be creature1 or creature2 depending on bracket
@@ -508,11 +523,9 @@ async function loadCurrentMatch() {
                 console.log('Player creature type:', gameState.creature1Type);
                 console.log('Opponent creature type:', gameState.creature2Type);
             }
-            
             document.getElementById('battle-messages').innerHTML = '';
             document.getElementById('next-match-btn').style.display = 'none';
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
-            
             // Switch to battle screen
             switchScreen('battle-screen');
             updateBattleDisplay();
@@ -541,7 +554,8 @@ function showLevelUpScreen(currentStats) {
     });
     document.getElementById('levelup-points-remaining').textContent = '3';
     document.getElementById('continue-tournament-btn').disabled = true;
-    
+
+    // Narration already set in submitMove
     switchScreen('levelup-screen');
 }
 
@@ -576,12 +590,12 @@ async function submitStatAllocations() {
 function showVictoryScreen(championName) {
     switchScreen('victory-screen');
     document.getElementById('champion-name').textContent = championName;
-    
+
     // Determine if player won or lost
     const playerWon = championName === gameState.creatureName;
     const asciiType = playerWon ? gameState.creature1Type : 'default';
     document.getElementById('champion-ascii').textContent = CREATURE_ASCII[asciiType] || CREATURE_ASCII.default;
-    
+
     // Update victory text based on result
     const victoryText = document.querySelector('.victory-text');
     if (playerWon) {
@@ -590,6 +604,14 @@ function showVictoryScreen(championName) {
     } else {
         victoryText.textContent = 'Better luck next time!';
         victoryText.style.color = 'var(--danger-color)';
+    }
+
+    // Show last narration in the victory narrator box if available
+    const victoryNarratorBox = document.getElementById('victory-narrator-message');
+    if (victoryNarratorBox && gameState.lastBattleNarration) {
+        victoryNarratorBox.textContent = gameState.lastBattleNarration;
+    } else if (victoryNarratorBox) {
+        victoryNarratorBox.textContent = '';
     }
 }
 
