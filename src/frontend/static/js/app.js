@@ -13,7 +13,9 @@ let gameState = {
     gameId: null,
     currentMatch: null,
     creature1Type: null,
-    creature2Type: null
+    creature2Type: null,
+    defendUses: 3,
+    specialUses: 1
 };
 
 // ASCII Art for creatures
@@ -337,6 +339,15 @@ async function createCreatureAndStartGame() {
 
 // Submit move
 async function submitMove(moveType) {
+    // Decrement uses and update UI immediately
+    if (moveType === 'defend' && gameState.defendUses > 0) {
+        gameState.defendUses--;
+        document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+    }
+    if (moveType === 'special' && gameState.specialUses > 0) {
+        gameState.specialUses--;
+        document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
+    }
     if (!gameState.gameId || !gameState.creatureId) return;
 
     // Disable buttons
@@ -403,6 +414,9 @@ async function submitMove(moveType) {
 
 // Update battle display
 function updateBattleDisplay(messages = []) {
+    // Update move uses UI
+    document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+    document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
     const match = gameState.currentMatch;
     if (!match) return;
 
@@ -504,6 +518,11 @@ async function loadCurrentMatch() {
             }
             
             document.getElementById('battle-messages').innerHTML = '';
+            // Reset move uses for new match
+            gameState.defendUses = 3;
+            gameState.specialUses = 1;
+            document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+            document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
             document.getElementById('next-match-btn').style.display = 'none';
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
             
@@ -568,6 +587,11 @@ async function submitStatAllocations() {
 
 // Show victory screen
 function showVictoryScreen(championName) {
+    // Reset move uses for new tournament
+    gameState.defendUses = 3;
+    gameState.specialUses = 1;
+    document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+    document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
     switchScreen('victory-screen');
     document.getElementById('champion-name').textContent = championName;
     
@@ -593,6 +617,11 @@ function switchScreen(screenId) {
         screen.classList.remove('active');
     });
     document.getElementById(screenId).classList.add('active');
+    // Always update move uses UI when showing battle screen
+    if (screenId === 'battle-screen') {
+        document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+        document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
+    }
 }
 
 // Reset game
@@ -607,8 +636,12 @@ function resetGame() {
         gameId: null,
         currentMatch: null,
         creature1Type: null,
-        creature2Type: null
+        creature2Type: null,
+        defendUses: 3,
+        specialUses: 1
     };
+    document.getElementById('defend-uses').textContent = `(3)`;
+    document.getElementById('special-uses').textContent = `(1)`;
 
     // Reset UI
     document.getElementById('creature-name').value = '';
