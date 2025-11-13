@@ -7,13 +7,15 @@ def make_creature(name="Player", cid=None):
     c = Creature(
         name=name,
         creature_type=CreatureType.DRAGON,
-        base_stats={'strength': 10, 'defense': 5, 'speed': 5, 'health': 100, 'luck': 1},
-        stat_allocations={'strength': 10, 'defense': 5, 'speed': 5, 'health': 100, 'luck': 1},
-        is_ai=False
+        base_stats={'strength': 10, 'defense': 5, 'speed': 5, 'health': 20, 'luck': 1},
+        stat_allocations={'strength': 10, 'defense': 5, 'speed': 5, 'health': 20, 'luck': 1},
+        is_ai=False,
+        current_hp=20,
+        max_hp=20
     )
     c.id = cid or name
-    c.current_hp = 100
-    c.max_hp = 100
+    c.current_hp = 20
+    c.max_hp = 20
     c.defend_uses_remaining = 1
     c.special_uses_remaining = 1
     return c
@@ -52,6 +54,7 @@ def test_create_tournament_null_players():
         TournamentManager.create_tournament(None, tournament_size=4)
 
 def test_create_tournament_zero_size():
+    """Test that creating a tournament with size zero raises a ValueError."""
     players = [make_creature("P1")]
     with pytest.raises(ValueError):
         TournamentManager.create_tournament(players, tournament_size=0)
