@@ -3,7 +3,7 @@
 # FastAPI and server (updated for Python 3.13 compatibility)
 fastapi==0.121.0
 uvicorn[standard]==0.32.0
-python-multipart==0.0.12
+python-multipart==0.0.20
 
 # Data validation (updated to versions with pre-built wheels)
 pydantic==2.9.2
