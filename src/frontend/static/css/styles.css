@@ -246,6 +246,9 @@ input[type="text"]:focus {
     border: 2px solid var(--border-color);
     border-radius: 10px;
     text-align: center;
+    display: flex;              /* enable vertical centering */
+    flex-direction: column;     /* stack children vertically */
+    justify-content: center;    /* center along vertical (y) axis */
 }
 
 .creature-info h3 {
@@ -279,11 +282,25 @@ input[type="text"]:focus {
 }
 
 .ascii-art {
-    font-size: 0.7rem;
-    line-height: 1;
+    font-size: 0.65rem; /* slightly smaller to help fit width */
+    line-height: 1.05;
     color: var(--primary-color);
-    margin-top: 15px;
-    overflow-x: auto;
+    /* remove margin-top so centering is true vertical */
+    margin: 0;
+    white-space: pre; /* preserve formatting */
+    overflow: visible; /* remove scrollbar */
+    display: inline-block;
+    max-width: 100%;
+    word-break: normal; /* ensure no forced wrapping mid-line */
+    margin-top: auto;   /* flex: push down if space above */
+    margin-bottom: auto;/* flex: push up if space below => centers */
+}
+
+/* Responsive scaling to further avoid scroll on very small screens */
+@media (max-width: 600px) {
+    .ascii-art {
+        font-size: 0.55rem;
+    }
 }
 
 .vs-divider {
@@ -431,5 +448,23 @@ input[type="text"]:focus {
 
     .creature-grid {
         grid-template-columns: 1fr;
+    }
+}
+/* Battle screen zoom utility (50% scale only when battling) */
+#battle-screen.battle-zoom {
+    zoom: 0.5;
+}
+@supports not (zoom: 1) {
+    #battle-screen.battle-zoom {
+        transform: scale(.5);
+        transform-origin: top left;
+    }
+}
+
+/* Mobile: gentler scaling for readability */
+@media (max-width: 600px) {
+    #battle-screen.battle-zoom { zoom: 0.75; }
+    @supports not (zoom: 1) {
+        #battle-screen.battle-zoom { transform: scale(.75); }
     }
 }
