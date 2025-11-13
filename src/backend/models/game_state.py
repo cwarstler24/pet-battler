@@ -19,6 +19,10 @@ class Match(BaseModel):
     move_history: List[MoveResult] = Field(default_factory=list)
     winner_id: Optional[str] = None
     is_complete: bool = False
+    
+    class Config:
+        arbitrary_types_allowed = True
+        validate_assignment = True
 
     def add_move(self, creature_id: str, move: Move):
         """Add a pending move for a creature."""

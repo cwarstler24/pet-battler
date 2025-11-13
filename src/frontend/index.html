@@ -121,6 +121,59 @@
             </div>
         </div>
 
+        <!-- Level Up Screen -->
+        <div id="levelup-screen" class="screen">
+            <h2>🎉 VICTORY! 🎉</h2>
+            <div class="levelup-display">
+                <p class="levelup-message">You defeated your opponent!</p>
+                <p class="levelup-bonus">You gained <strong>3 stat points</strong> to allocate!</p>
+                
+                <div class="form-group">
+                    <label>Allocate Your Stat Points (3 points available):</label>
+                    <div class="stat-controls">
+                        <div class="stat-row">
+                            <span>⚡ Speed: <strong id="current-speed">0</strong></span>
+                            <button class="levelup-stat-btn" data-stat="speed" data-change="-1">-</button>
+                            <span id="levelup-speed-value">0</span>
+                            <button class="levelup-stat-btn" data-stat="speed" data-change="1">+</button>
+                            <span class="new-total"> → <span id="new-speed-total">0</span></span>
+                        </div>
+                        <div class="stat-row">
+                            <span>❤️ Health: <strong id="current-health">0</strong></span>
+                            <button class="levelup-stat-btn" data-stat="health" data-change="-1">-</button>
+                            <span id="levelup-health-value">0</span>
+                            <button class="levelup-stat-btn" data-stat="health" data-change="1">+</button>
+                            <span class="new-total"> → <span id="new-health-total">0</span></span>
+                        </div>
+                        <div class="stat-row">
+                            <span>🛡️ Defense: <strong id="current-defense">0</strong></span>
+                            <button class="levelup-stat-btn" data-stat="defense" data-change="-1">-</button>
+                            <span id="levelup-defense-value">0</span>
+                            <button class="levelup-stat-btn" data-stat="defense" data-change="1">+</button>
+                            <span class="new-total"> → <span id="new-defense-total">0</span></span>
+                        </div>
+                        <div class="stat-row">
+                            <span>💪 Strength: <strong id="current-strength">0</strong></span>
+                            <button class="levelup-stat-btn" data-stat="strength" data-change="-1">-</button>
+                            <span id="levelup-strength-value">0</span>
+                            <button class="levelup-stat-btn" data-stat="strength" data-change="1">+</button>
+                            <span class="new-total"> → <span id="new-strength-total">0</span></span>
+                        </div>
+                        <div class="stat-row">
+                            <span>🍀 Luck: <strong id="current-luck">0</strong></span>
+                            <button class="levelup-stat-btn" data-stat="luck" data-change="-1">-</button>
+                            <span id="levelup-luck-value">0</span>
+                            <button class="levelup-stat-btn" data-stat="luck" data-change="1">+</button>
+                            <span class="new-total"> → <span id="new-luck-total">0</span></span>
+                        </div>
+                    </div>
+                    <p class="points-remaining">Points Remaining: <span id="levelup-points-remaining">3</span></p>
+                </div>
+                
+                <button id="continue-tournament-btn" class="btn-primary" disabled>Continue to Next Match</button>
+            </div>
+        </div>
+
         <!-- Victory Screen -->
         <div id="victory-screen" class="screen">
             <h2>🏆 TOURNAMENT COMPLETE! 🏆</h2>
