@@ -453,12 +453,17 @@ function setupEventListeners() {
     // Creature name input
     document.getElementById('creature-name').addEventListener('input', updateStartButton);
 
-    // Stat allocation buttons
+    // Stat allocation buttons (initial and level-up)
     document.querySelectorAll('.stat-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const stat = btn.dataset.stat;
             const change = parseInt(btn.dataset.change);
-            adjustStat(stat, change);
+            // If on level-up screen, use adjustLevelupStat, else use adjustStat
+            if (btn.closest('#levelup-screen')) {
+                adjustLevelupStat(stat, change);
+            } else {
+                adjustStat(stat, change);
+            }
         });
     });
 
@@ -476,14 +481,7 @@ function setupEventListeners() {
     // Next match button
     document.getElementById('next-match-btn').addEventListener('click', loadCurrentMatch);
 
-    // Level-up stat allocation buttons
-    document.querySelectorAll('.levelup-stat-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const stat = btn.dataset.stat;
-            const change = parseInt(btn.dataset.change);
-            adjustLevelupStat(stat, change);
-        });
-    });
+    // (No longer needed: levelup-stat-btn event listeners)
 
     // Continue tournament button
     document.getElementById('continue-tournament-btn').addEventListener('click', submitStatAllocations);
@@ -523,10 +521,16 @@ function adjustLevelupStat(stat, change) {
     const remaining = 3 - Object.values(gameState.levelupStatAllocations).reduce((a, b) => a + b, 0);
     document.getElementById('levelup-points-remaining').textContent = remaining;
     
-    // Update the new total display
-    const currentStatValue = parseInt(document.getElementById(`current-${stat}`).textContent);
-    const newTotal = currentStatValue + newValue;
-    document.getElementById(`new-${stat}-total`).textContent = newTotal;
+    // Update the new total display (only if element exists)
+    const currentStatElem = document.getElementById(`current-${stat}`);
+    if (currentStatElem) {
+        const currentStatValue = parseInt(currentStatElem.textContent);
+        const newTotalElem = document.getElementById(`new-${stat}-total`);
+        if (newTotalElem) {
+            const newTotal = currentStatValue + newValue;
+            newTotalElem.textContent = newTotal;
+        }
+    }
 
     // Enable continue button only when all 3 points are allocated
     const btn = document.getElementById('continue-tournament-btn');
@@ -837,8 +841,11 @@ function showLevelUpScreen(currentStats) {
     // Display current stats
     if (currentStats) {
         Object.keys(currentStats).forEach(stat => {
-            document.getElementById(`current-${stat}`).textContent = currentStats[stat];
-            document.getElementById(`new-${stat}-total`).textContent = currentStats[stat];
+            const currentStatElem = document.getElementById(`current-${stat}`);
+            if (currentStatElem) currentStatElem.textContent = currentStats[stat];
+            // Only update new-<stat>-total if it exists (for backward compatibility)
+            const newTotalElem = document.getElementById(`new-${stat}-total`);
+            if (newTotalElem) newTotalElem.textContent = currentStats[stat];
         });
     }
     
