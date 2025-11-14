@@ -1,4 +1,4 @@
-# 🎮 Pet Battler - Tournament Arena
+# 🎮 Creature Battler - Tournament Arena
 
 A turn-based creature battle game featuring tournament-style gameplay, AI opponents, and strategic combat mechanics. Build your ultimate creature, allocate stats wisely, and fight your way to become the tournament champion!
 
@@ -349,5 +349,6 @@ This project was developed as an educational exercise. Feel free to fork and ext
 This project is available for educational purposes.
 
 ## 🙏 Acknowledgments
+
 
 Built with FastAPI, modern Python practices, and lots of creature-battling fun!
