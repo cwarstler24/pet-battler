@@ -36,7 +36,9 @@ class NarratorAgent:
 			narration = response.choices[0].message.content.strip()
 			return narration
 		except Exception as e:
-			return f"[Narrator error: {e}]"
+			import logging
+			logging.exception("Narrator error: %s", e)
+			return "[Narrator unavailable]"
 
 	def _format_prompt(self, event: Dict[str, Any]) -> str:
 		# Example: "In round 2, Flareon used Attack and Vaporeon used Defend. Flareon dealt 10 damage. Vaporeon is left with 15 HP."
