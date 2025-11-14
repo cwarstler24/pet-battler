@@ -6,7 +6,6 @@ from enum import Enum
 from typing import Dict, Optional
 from pydantic import BaseModel, Field, field_validator
 
-
 class CreatureType(str, Enum):
     """Available creature types with unique characteristics."""
     DRAGON = "dragon"
@@ -22,15 +21,13 @@ class CreatureType(str, Enum):
     JACOB = "jacob"
     BEYBLADE = "beyblade"
 
-
 class CreatureStats(BaseModel):
     """Base statistics for a creature (1-20 range)."""
-    speed: int = Field(ge=1, le=20, description="Affects dodge chance")
-    health: int = Field(ge=1, le=20, description="Maximum hit points")
-    defense: int = Field(ge=1, le=20, description="Damage reduction percentage")
-    strength: int = Field(ge=1, le=20, description="Damage dealing percentage")
-    luck: int = Field(ge=1, le=20, description="Critical strike chance")
-
+    speed: int = Field(gt=0, lt=21, description="Affects dodge chance")
+    health: int = Field(gt=0, lt=21, description="Maximum hit points")
+    defense: int = Field(gt=0, lt=21, description="Damage reduction percentage")
+    strength: int = Field(gt=0, lt=21, description="Damage dealing percentage")
+    luck: int = Field(gt=0, lt=21, description="Critical strike chance")
 
 # Stat biases for each creature type (modifiers applied to base stats)
 CREATURE_STAT_BIASES: Dict[CreatureType, Dict[str, int]] = {
@@ -48,7 +45,6 @@ CREATURE_STAT_BIASES: Dict[CreatureType, Dict[str, int]] = {
     CreatureType.BEYBLADE: {"speed": 6, "defense": -4, "strength": 2},
 }
 
-
 class Creature(BaseModel):
     """A battle creature with stats and state."""
     id: Optional[str] = None
@@ -56,12 +52,12 @@ class Creature(BaseModel):
     creature_type: CreatureType
     base_stats: CreatureStats
     current_hp: int = Field(ge=0)
-    max_hp: int = Field(ge=1, le=20)
+    max_hp: int = Field(gt=0, lt=21)
     is_ai: bool = False
-    
+
     # Round-specific resource tracking
-    defend_uses_remaining: int = Field(default=3, ge=0, le=3)
-    special_uses_remaining: int = Field(default=1, ge=0, le=1)
+    defend_uses_remaining: int = Field(default=3, gt=-1, lt=4)
+    special_uses_remaining: int = Field(default=1, gt=-1, lt=2)
 
     @field_validator('current_hp')
     @classmethod
@@ -88,33 +84,33 @@ class Creature(BaseModel):
             stat_allocations: Player-allocated stat points (max 6 total)
             is_ai: Whether this is an AI-controlled creature
         """
-        # Start with base stats (10 for each)
+        # Start with base stats (20 for health, 15 for defense, 8 for strength)
         base_stats = {
             "speed": 10,
-            "health": 10,
-            "defense": 10,
-            "strength": 10,
+            "health": 20,
+            "defense": 15,
+            "strength": 8,
             "luck": 10
         }
-        
+
         # Apply creature type biases
         biases = CREATURE_STAT_BIASES.get(creature_type, {})
         for stat, bias in biases.items():
             base_stats[stat] = max(1, min(20, base_stats[stat] + bias))
-        
+
         # Apply player stat allocations (if provided)
         if stat_allocations:
             total_allocated = sum(stat_allocations.values())
             if total_allocated > 6:
                 raise ValueError("Cannot allocate more than 6 stat points")
-            
+
             for stat, points in stat_allocations.items():
                 if stat in base_stats:
                     base_stats[stat] = max(1, min(20, base_stats[stat] + points))
-        
+
         stats = CreatureStats(**base_stats)
         max_hp = stats.health
-        
+
         return cls(
             name=name,
             creature_type=creature_type,

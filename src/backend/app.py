@@ -2,14 +2,13 @@
 Pet Battler - FastAPI Backend Main Application
 """
 
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
-from pathlib import Path
-
-from .routes import creature_router, game_router
 from .middleware.rate_limit import RateLimitMiddleware
+from .routes import creature_router, game_router
 
 # Create FastAPI app
 app = FastAPI(

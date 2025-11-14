@@ -13,102 +13,380 @@ let gameState = {
     gameId: null,
     currentMatch: null,
     creature1Type: null,
-    creature2Type: null
+    creature2Type: null,
+    defendUses: 3,
+    specialUses: 1
 };
 
-// ASCII Art for creatures
+// ASCII Art for creatures (compact versions)
+// Reduced to minimal size to avoid scrollbars.
 const CREATURE_ASCII = {
-    dragon: `
-      /\\___/\\
-     ( o   o )
-      >  ^  <
-     /|_____| \\
-    /_|     |_\\
-    DRAGON
-    `,
     owlbear: `
-    ___,___
-   (O,,,,,O)
-    ( V V )
-    /|   |\\
-   / |   | \\
-    OWLBEAR
-    `,
-    gnome: `
-      _._
-     (o.o)
-    --|||--
-     / | \\
-    /  |  \\
-     GNOME
-    `,
-    kraken: `
-    ≈≈≈≈≈≈
-   ((O  O))
-    \\ == /
-   ≈≈≈≈≈≈≈
+                ░░░░░░░░░░░▒░░░░░░░░                  
+            ░░░▒░░▒░▒▒▒░▒░░░░░░░                  
+        ░ ░░░▒▒░▒▒▒▒▒▒▒▒▒▒▒▒░▒▒░░░ ░              
+        ░▒░▒▓▒▓▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▒░░░░              
+    ░ ░░▒▒▓▓▓▒▒▒▒▒▒▒▒▒▒░░▒░░▒▒▒▒▓▒░░░░░░░░ ░      
+    ░░░░▒▒▓▒▒▒▒▒▒▒▒▒░░▒░▒░░░░░░▒▒▓▒▒░░░░░░░░      
+    ░░▒▓▒▓▒▓▒▒▒▒▒▒░░▒▒▒▒▒░▒░░░▒▒▒▒▒▓▒▒░░░░░░░░░░  
+    ░░▓▓▒▒▒▒▒▒▒░▒░░░░▒░▒░▒░░▒░▒▒▒▒▒▒▒▒░░░░░░▒░░░  
+    ░▒▒▓▓▒▒▒▒▒▒▒░░░░░░▒░▒░░░░▒▒▒▒▒▒▒░░░░░░░░░░▒░  
+    ▒▓▓▓▓▒▒▒▒▒▒░░░░░░░▒░░░░▒▒▒░▒▒▒▒▒▒░▒░░░▒▒░▒▒▒  
+    ▒▓▓▓▓▒▒▒▒░░░░░░░░░▒░▒▒▒▒▒▒░▒▒▒▒▒▒▒▒▒░░▒▒▒▒▒▓░░
+    ▓▒▓▓▓▒▒▒▒▒░░░░░░░░░▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░▒▒░░░▓▒▓▒░░
+  ░░▒▒▒▓▓▓▓▒▒▒▒░░░░░░░▒▒▒░▒▒▒▒░▒▒▒▒▒▒▒▒▒▒▒░▒▓▒▒▒▒░
+░░░▓▓▒▓▓▒▒▒▒▒▒▒▒░░░░▒▒▒░▒░░▒▒▒▒░░▒▒▒▒▒▒▒▒▒░▒▓▒▒▒▒░
+░░░▒▓▒▓▒▒▒▒▒░▒░▒▒▒▒▒▒░▓░░░░░▒▒▒▒░░▒▒▒▒▒▒▒▒▒░▓▒▒▒▒▒
+    ▓▓▓▓░▒░░░▒▓▓░░░░░▒▓░░░░░▒▒▒▒▒▒▒░▒▒▒▓▒▒▒▒▓▒▒▒▒▓
+  ░░▓▓▓▓▒▒▒░░░░░░░▒░░░░░░░░░▓▒▒▒▒░░▒▒▒▒▒▒▒▒▒▓▒▒▒▒░
+░░░░▓▓▓▓▓▓▒▒░░░░░▓▒░▓▓░░░░▒▓▓▒▒▒▒░░░░▒▒▒▓▒▒▒▓▒▒▒▒░
+░░░█▓▓▓▓▓▓▓▒░░░▒░░▒▒░░░░▒▓▓▓▓▒▒▒▒▒▒░░▒▒▒▒▒▒▒▒▒▒▒▒░
+░░░▓▓▒▓▓▓▓█▓▓▒▒▒▒▒▒░░▒▓▓▒▒▒▓▓▓▓▓▒░░░▒░▒▒▒▒▒▒░▒▒▓░░
+░░░▓▓▓▓▓▓▓▓▓▓▒▒▒▒▒▒▒░▒▒▒▒▓▓▓▓▓▓▓▒▒░░▒▒▒▒▒▒▓▒▒▓▓▒▒░
+░░░▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▒▒▓▓▓▓▒▓▓▓▒▒▒▒▒▒▒▒▒▒▓▓▒▓▓▒▒▓░
+░ ░▓▒▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▒▒▒▒▒▒▒▒▒▓▒▓▓▓▓▒▒▓░
+░ ░▓▒▒▓▓▓▒▓▓▓▓▓█▓▓░░░░░░▒▓▓▒░▓▓▒▒▒▒▒▒▒▒▒▓▒▒▒▒▒▒▒▓░
+ ░░█▓▒▓▓▒▒▓▓▓▓▓▓▓▓▒░    ▒▒▒▒▒▓▒▒▒▒▒░▒▒▒▒▒▒▒▓▒▓▓▓░░
+ ░░▒▓▒▓▓▓▓▒▒▒▒▓▓▓▓░░    ░▒▒▒▓▓▒▒▒▒░░▒▒▒▒▓▒▒▒▒▓▓▒░░
+  ░░▓▒▒▒▓▓▒▒▒▒▒█▓░ ░░░░░░░▒▒▒▓▓▒▒░▒▒▒▒▒░▓▒▒▒▒▒▓░  
+  ░░▓▒▒▒▒▓▓▒▒▒▒▓▓░ ░░░░▓▓▒▒▒▒▒▓▒▒▒▒▒▒▒▒▒▒░░▒▒▒▓░  
+    ░░▒▒▒▒▓▓▓▒▒▓▓▓░░░░▓▓▒▓▓▓▓▓▒▒▒▒▒▒▒▒▒▒░▒▒▒▒▒▓░░ 
+    ░░░▒▒▒▒▒▓▓▓▓▓▒░░ ░░░░░░░░▓▒▒░░░▒▒▒▒▒▒▓▓▓▓░░░  
+░░░░░░░░▒▒▒▓▓▓▒▒▓▒░░░░░░░░░░░▒▒▒▒▒░▒▒▓░░░░        
+░░░░▒▒░░▒▒▒▒▒▓▓▒▓▒░░░░░░░░░░░▒▒▒░▒▒▒▒▒░░          
+▒▒▒▒▒▒▒▒▒▒▒▒▓▓▓▒▒▒▒▒▒░░░░░░░░▒▓▒▓▒▓▒▒░░░░░        
+░░░▒░░▓▒▒▒▒▒▒▒▒▒░░░░░░░░░░░░░░▒▒░▓░░░░░░░░░░      
+        OWLBEAR
+                    `,                                                   
+                                                  
+    dragon: `
+                                                  
+    ░  ▓▓▒▓                                       
+    ░░▒░▒▓░░▒                                     
+    ░░▒░▒▓░▒▒░▒█░  ░░      ▓██░░░                 
+     ▓▓▓▓▓▒░▒░▒████░░█░     ██▓█▓▓▓▓██░           
+     ░▒▓░▒░▒░ ░░█████░█▓░    ▓█▓▓▓▓▓▓▓▓▓█░        
+        ▒ ░  ░░░░▓███  █▓▓   █▓▓▓▓▓▓▓▓▓▓▓▓█░      
+                  ▓▓██░▓▓▓▓░██▓▓█▓▓▓▓▓▓    ▓░     
+                  ░▓▓█████▓▓▓▓▓▓▓▓░  ░█      ░    
+                    ▓▓▓█████░    ▓      ░         
+                    ░▓▓▓▓█████▒      ░█ ░█        
+                    ▒█░▓▓███████▒         █       
+                    █░ ██▓▓▓▓██████      ░█       
+                       ░██▓  ░▓▒█▓████▒███░       
+                     ░░░█░    ░░█▒░ ░░░░░         
+
+        DRAGON
+        `,
+        gnome: `                                    
+                                                  
+                                                  
+                      ░█▓▓▓▓▓▓▓▓▓▓▒               
+                   ░█▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒             
+                  █▓▓▓▓▓▓▓▓▓▓▓▓█░░░▓██            
+                 ▓▓▓▓▓▓▓▓▓▓▓▓▓         ░          
+               ░▓▓▓▓▓▓▓▓▓▓▓▓▓█       ░█           
+               ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒                   
+              █▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░                  
+              ▓▓▓██░ ▒▒░░▓░▓█▓▓▓▒                 
+              ▒     ▓░░░░░░█    ▒█                
+              ░     ▓░░░░░░▓     ░                
+             ▒       ▒░░░░▓      ▓                
+            ░                     █               
+           ░                   ░░  ░░             
+          ▓▓▓▓ ▒                ░                 
+              █                 ░                 
+            ▓   ▒      █░   ▒     ░               
+         ░▓░░▒▒  ░    ░▓▓▒  ▓▓ ▓▒▒▓░              
+                ▒███  █▓▓▓░ ░████                 
+               ████████   ░ █████▓                
+               ▒█████      ▒ ░▓▓                  
+                            
+            GNOME
+        `,
+        kraken: `
+                                                  
+                                                  
+                      ░░░░                        
+                    ░█▓▒▒▒▓▓█                     
+                    █▓▓▒▒▒▒▒▓█                    
+                   █▓▓▓▒▒▒▒▒▓▓█                   
+                  ▒█▓▓▒▒▒▒▒▓▓▓█▓                  
+            ░░░░  ██▓▓▓▓▒▒▒▓▓▓██  ░░░░            
+           █▓░▓▒   ██▓█▓▒▓▓█▓██░ ░▒▓░▒█           
+      ▒▒▒█ ░  █▒    ▓█░█▓▓█░▓▓░  ░▒█ ░░ █▒▓▒      
+      █ ░▒░ ░▓█░    ▓█▒▓██▓▒█▓░   ░█▓░ ░▒░ █░     
+       ░██ ░▒▓█░░█▒█████▓▓█████▒█░░█▓▒  ██        
+       ░▓█ ░█▓▓██▒▓█▒▓▓▒▓▓▒▓▓▒█▓▒██▓▓█  █▓░       
+       ░▓▓▓▒▓▒▒▓▓█▒▓▒▓▓████▓▓▒▓▒█▒▓▒▒▓▒▓▓▓░       
+         █░░█░█░▒▓█▒▓█░    ░█▓▒█▓▒░█░█░░█░        
+       ░██   ░█▓▓░█▒▓█      █▓▒█░▓▓█░   ██░       
+       █▓▓▒▒▓▓█░█░░▒▓█░    ░█▓▒░░█░█▓▓▒▒▓▓█       
+        ░▒███▒░░   ░▒▓█    █▓▒░   ░░░███▒░        
+                    ░▒▓░  ░▓▒                     
+                     █▒█░ █▓█                     
+                █    █▓█  █▓█    █                
+               ░▓█░░███░  ░███░░█▒                
+                 ░░░░        ░░░                  
+                                                                                  
     KRAKEN
-    `,
-    cthulu: `
-    /~~~~~\\
-   ( O   O )
-    \\ ___ /
-    |||||||
-    CTHULU
-    `,
-    minotaur: `
-     @ @ 
-    (O-O)
-    | ^ |
-    /| |\\
-   / |_| \\
-   MINOTAUR
-    `,
-    cerberus: `
-   /\\ /\\ /\\
-  (oo)(oo)(oo)
-   VV  VV  VV
-    CERBERUS
-    `,
-    medusa: `
-    ~~~§~~~
-   ( O   O )
-    \\  o  /
-     |||||
-     MEDUSA
-    `,
-    robot: `
-    [■■■]
-    (o o)
-    |===|
-    | | |
-    |_|_|
-     ROBOT
-    `,
-    "python-python": `
-    ~~~~S~
-   ( o   )~
-    ~~~~~
+        `,
+        cthulu: `
+                ░░░░░█▒▒▒▒▒▒█░░░░░░               
+             ░░░░▓▒▓▒░▒█▒▒▓░▒▒▓▒█░░░░             
+             ░█░▒█▓▒█▒█▒▒▒▒█▒█▒▓▓▒░█░░            
+          ░░███░▓▒▒█▒▒▓▒▒▒▒▓▒▓█▒▒▓░▓██░░          
+        ░░▒▓▒▒▓░░░█▓█▒▓█░░█▓▓███░░▒█▓▒▓▒░░░       
+        ░▒▒▒░░▒▒▒█▓▓▒▓█▒▓▒▒█▒▒▓▓█▒▒▓▒▒▒▒▒░░       
+        █▒▒░▒▒▒▒▓▒░▓█▒▒▓▒░▓▒▓█▓░█▓▒▓▒▒▒▒░█░       
+       ░▒▒░░░▒▓░░░░▓▓▒▒▒▒▒▒▓▒▓▓░░░░▓▓░░ ▒▒░       
+       ░░░░░░█░░░░▒▓░▓█▒▒▓▒█▒▓░▒░░░░█░  ░░░       
+             ░░░░█▒█▓▒█▓▓▒▓█▒▓█▒█░░░░             
+             ░█░▒█▓▓█▒▓█▒█▒▓▓█▒▒██░░              
+             ░░░▓▒▓██▓▓███▒█▒██▓▒█░               
+             ░░░▓▓▒█▒█▒█▒▒▓██▒▓█▓▓▒               
+               ░░█▒▒▒░▒▓░█▓▓░█░▒█░░               
+                   █▓▒▓░  ░█▓█░░                  
+     CTHULU
+        `,
+        minotaur: `
+                           ░░░░░░░░░░░░░░░        
+                           ░░░░▒░░░░▒░░░░░        
+                       ░░░░░░░░▓░░░░▓░░░░░        
+                       ░ ░░░░▒▓▒░░░▒▓             
+  ░ ░░░                ░░░░░▓▓░░░░░▒▓ ░           
+░░░▒▓▓▒▒▒░░░░░         ░░▓▓▓▓▒▒▓░░░░▒▓░░░         
+░░░▒▒░▒▒▒▒▓▒░░░░     ░ ░▓▓▓▒▓▓▓▒▒▓░░▓▓░░░░        
+░░░░▒▒▒▒▒▒▒▒▒▒▒░░░░░░░░▒▒▓▓▓▓▒▓▓▒▒▒░░░░░░░        
+░░░░▒▒▒▓▒▒▒▓▒▒▓▓░░░░░▓▓▓▓▓▓▓▓▓▒▓▓▒▒▒▒             
+░░░░▒▒▓▓░▓▒▓▓▓▓▓▓▒░░░▓▓▓▒▓▒▓▓▒▒▒▓▓▓▒▓             
+░░░░▓▓▓▒▓▓░░░░░▓▓▓░░▒▓▓▓█▓▓▓▓▓▓▓▓▓▓▓░             
+░░░▒▓▓▓▓▒░░░░░░░░░░░▓▒▓░▓▓▒▒▓▓▒▒▒▓▓▓░░░           
+░▒▒▓▓▓▒▒░░░░░░░░░▓▓▓▓▓▓▓▓▓▓▒▒▓▒▒▒▓▓█▒░░░░░        
+▓▓▒▒▒▓▓░░░░░░░▒▓▓▓▒▒▒▒▒▒▒▓▓▒▓▓▓▒▒▓▓▒▓▓▓▓░░        
+░░░▓▓▓▓▒▒▒▒▒▒▒▓▓▓▒▒▒▒▓▒▒▒▒▓░░░▒▒▒▒░░▒▓▓▓▓▒░░      
+    ░░░▒▓▒░▒▓▒▒▓▓▒▒▒▓▒▒▒░░▓░░░░▒▓▒▒░░▒▓▓▓▓░░░░    
+    ░░░▓█▓▓▓▒▒▓▓▓▒▒▒▓▓▓▒▒▒▒░░░▒▒▓▒░░░▒▓▓▒▓▓░░░    
+    ░░░░▓▓▓▓▒▓█▓▒▓▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▒▒▒▓█░░    
+    ░░░░░▓▓▓▓▒▓▒▓█▒▒▓▓▓▓▒▓▓▓▓▓▓▓▒▓▓▓▓▓▓▒▓▓▓█▒░    
+    ░░░░░░█▓▓▓▓▒▓▒▓▓█▓▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓░▓▒▓▓▓▓▒░    
+         ░░▓▓▓▓▓▓▓▓▓░▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓░▓▓▓▓▓▓▓░░    
+         ░░░▓▓▓▓▓▓▒░░▓▓▓▓▓▓█▓▒▒▓▓▒▓█░▓▓▒▒▓▓▓░░    
+         ░ ░░░░░░░░░▓▓▒▓▓█▓▓▓▒▓▓▓▒▒▓▓▓▒▒▓▓▓░░░░░░░
+         ░ ░░░░░░░░▓▓▒▓▓▓▓▓█▓█████▓█▓▓▒▓▓▓▓▓░░░░░░
+         ░ ░░░░░░░▓▒▒▒▓▓▓▓▓▓▓▓▓▓▓█▓▓▓▓▒▓▓▓▓▓▓▓░░░░
+    ░ ░░░░░▒▒▓▓▒░▓░░▒▒▒▓▓▓▓▓▓▓▓▓▓█▓▓▓▓▓▓▓▓░▓█▓▓▓▓▒
+    ░░░░░▒▒▓▓▒░░▓░▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓▓░░░░░░░░░░▒░
+    ░░░░▓▓▓▒░░░▒▒░▒▒▒▒▒▓▓█▓▓▓▓▓▓▓▓▓▓▓▓░░░░     ░░░
+    ░░░░▒▓▒░░░░▒▒▒▓▓▒▓▓▓▓▓▓▓▒▓▒▒█▓▒▓▓▓▓░░░        
+    ░░░▒▒▓░░░░░▒▒▒▓▓▓▓▓▓▓▓▓▓▓▓█▓█▒▒▓▓▓█▓░░        
+    ░░░░▒▓░░░░▓▒▓▓▓▒▓▒▓▓▓▓░▓▒▓█▓▒▓▓▓▓▒▓█░░        
+    ░░░░░▒▒░░░░▓▓▓▒░▒▓▓▓▓▒░▓▓▓▓▓▓▒▒▒▒▓▓▓░░        
+    ░░ ░ ░▒░░░░▓▓▒▒▒▒▓▓▓░░░░░▒▓▓▒▓▓▓▓▓█░░░        
+         ░░░░░░▓▓▓▓▓▓▓▓▒░░░░░▓▒▒▒▒▒▓▓▓░░░░        
+         ░ ░ ░░▒▒▓▓▓▓▓▓░░░░░░▓▒▒▒▒▓█░░░░░░        
+             ░░▓▒▒▓▓▓▓░░░░░░░▓▒▒▓▓▓░░             
+             ░▓▓▒▒▓▓▓░░░░░░░▓▒▓▒▒▓░░░             
+         ░░░░░░▒▒▓▓▓▓░░░░░░░▒▓▓▒▓▓▒░░░            
+         ░░░░░▒▒▒▓▓█░░░░░░░░░░▓▓▓▒▓░░░░           
+         ░░░▓▒░▒▒▓▓▓▓░░░░░░░░▒▓▓▒▒▒▓█░░           
+         ░░▒▒▒▒▒▓▓▓▓▓░░░░░░░░▓▓▓▓▓▓▒▓█░░░░        
+         ░▓▓▓▒▓▓▓▓▓▓█░░░░░░░░▓▓▓▓▓▓▓▓▓▓░░░        
+      ░░░░▒▒▓▓▓▓▓▓▓▓█▓░░░░░░░▓▓▓▓▒▓▓▓▓█▒░░░░      
+    ░░░░░▓▒▓▓▓▓▒▓▓▓▓▓▓▓▓▒▒▓▓▓▓█▓▓▓▓▒▓▓▓▓▓▒▒░      
+      ░░░▒▒▒▓▓▓▓▓█▓▓▒▒░░░░░░░░░░░░░░░░░░░░░░      
+ MINOTAUR
+        `,
+        cerberus: `
+                                         ░▒░░░    
+    ▒                                  ░░     ░   
+   ░▒▓▓▒▓▒▒▓▒▒░                ░      ▓░▓  ▒▒▓░   
+  ▒▒▒▒▒▒▒▒▒░▓▒▓▓▓▒░       ▒▒░░▒▒▒░     ░░         
+  ░▒▒▒░░▒░▒▓▒▒▒▒░▒▒▒▒░  ░░▒░▒▓▓▒▒▓░░   ▒░▒        
+   ░░░▒▒░▒░▒▒▒▒▒▒▒▒▒░░▒▒▓░▒▒▓▒▒░▒▓█░░░   ▒░▒      
+        ░░░░░░░░▒░▒░░▒▒░▒░▒▒▒░░▒▒░▒▒▒█    ▒░░     
+            ░░▒░░░░▒▒▒▒░░░░░░▒░░░░░░        ▒░    
+              ░░▒▒█▒▓▒▒░░░░░░░░░░▒▒▒        ░░░   
+            ░░▒░░▒▒▒▒▒▒▒░░░░░░▒▒░░█░▓▒░    ▒░░░   
+           ░█░░▒▓▒▒▒░▒░▒▒▒░░▒▒░▒▒▒░▒▒▒▒▓▒░░░░░    
+           ░░░▒░▒▓▓▓▒▒░░▒▒▒░░░░░░░▒▒▒▒▒▒▒▒░░░     
+           ░░░▒▒▒░▓▓▒▒░▒▒▒▓▒░░░░░░░▒▒▒▒▓░░▒       
+           ░░▒▒▒▒▒▓▓░▓░▒░▓▒▒░░░░░░░░░░░▒▒▒▓░      
+          ░░░░▒░▒▒▒▓░░░▒▓▓░░░░░░░░░░░░░░▒▒▒░      
+         ░▒░░░░░▓▓▓▒░░░░░░░░ ░░░░░     ░▒▒▒░░     
+         ░▒░░░▒░▒▒░▒░   ░░▒░ ░░░░░      ░▒▒░▒░░   
+        ▓░░░░ ░░▓░▒    ▒▒░░   ░░░░          ░░▓   
+       ▒▒▒░     ░     ▒▒░      ░░░           ░▒░  
+       ▒░░         ▒▓▒        ░░              ▒▒  
+      ░▒░         ░░▒       ░░░                ▒▒ 
+     ▓▒░          ░░░    ░░░░░                 ▒▒ 
+   ▒▓▒             ░                          ▒▒▒▒
+ ▓█▓▒▒                                       ░░▒ ░
+ ░░░░                                             
+ CERBERUS
+        `,
+        medusa: `
+                                                  
+                                                  
+                  ░░▒░░░░░   ░░▒▒░░ ░             
+               ░░░░░░▓▓▓▒░    ▒▓▓▒▒░              
+        ░░░░░░░░░░▒▓▒▒▓▒░▒ ░ ▓▓▒▒▒░░░░░░░ ░ ░     
+       ░░░░▓▒▓▓░░░▒▒▒▓▒▓▒▒░░░░▒░▒▒▓░░░▒▒░░░░░     
+       ░ ░░░░▒▓▒░░░▓░▒░▒▒░▒░░▒▒▓▓▒░░▓▒▒░░░░ ░     
+        ░░░▒▒▒▒▓▒▒▒▒▓▒▓▓▒░▓▓▓▓▒▓▒▒▒▓▒░░░░ ░░░     
+       ░░▓▒▓▒▒▒▒▒▓▒▒░▓▒▒▒▓▒░▓▓▓▓▓▒░▒▓▓▒▓▓░░░      
+       ░░▒▒▓░▒▒▓▓▒▒▒▒▓▒▒▒▒▓▓▓▒▓▓▓▓▒▒▒░░▒▓▓░░░     
+    ░░░░░▒▒▓▒▓▒▒░▒▓▓▓▓▒▒▒▒▒▒░▓▓░▓▓▓░▓▒▓▒▓▓░░░     
+    ░░░▓▒▒▒▓░░░░░▒▒▓▒▒░▒▒▓▒▒▓▓▒▒▓▓▒░▓▒░▓▒▒░▒░░░   
+   ░░░▒▒░░▒▓▒▒░▒░▒▓▓▒░░████▓░░▒▒▓▓▒▒▒▓▒▒▓░▒░░░░   
+    ░░░░▒▒▒▒▓░▓▒▒▓▓▓▓▒▓█░░░███▓░▓▓▓▒▓▒▒░▒▒▒░░░░ ░ 
+ ░  ░░░░░▓░░▓▒▓▒▒▒░████████▓█▒▓▓▒▒▒░▒▒▒▒▒▓░▒░░░   
+░░░░▒▒░░▒▒▒░▒░▓▓▒░▓▓█░█████▓█░▓▓▓░▒▒▓▓▓▒░░░░░░░░  
+ ░░▓▒▒▒▒░▓░▒▓▓▒▓▒░▒░░░▒▒██▓░░░░░▒░▓▒▒▓▓░▒▒░░▒▒▒░░ 
+░ ░░▒▒▒▒▒▓▓▒▒▒▒▒▒░▓░░▒░░██▒░░▒░░▒▒▒░░░▒▒▓▓▓░▒▓▒░░ 
+    ░░░▓▓▒░░░▒▒▒▒▒░░▒█▒▒██▓░░▓▒░▒▒▓░▓▒▒▒░▒▓▒▒░    
+    ░░░░░▓░▒▓▒▒░░░▓█▓█████▓▓██▓▓▓░▓▓▓▒░▒▓░░░░     
+     ░░░░░░▒▒▓▓░▓▒▒█████▒▒░████▓▒▓▒░░░▒▒▒░░ ░     
+    ░░░ ░░▒░▓▒▒▒▒▒░▓▓██▒▒▒░▒██▒▒░▒▓▓▓▒▒▒░         
+    ░  ░░░░▓░▒▒▒▒▓▓▒▓██▓░░░▓▓▓▒░▒▒▓▒▒▒▓▓░░ ░░     
+        ░░▒▒░▒▒▒▓▓░░░░█████▓▓░░░▒▓▒▒░░░▒▒░░░░     
+        ░░░░░░░░░▒▓▓▓░░░░░░░░▓▒▒░░░░░░░░░░░░      
+         ░░    ░░░░▒▒░    ░░░▒▓▒░░                
+          ░     ░░▓▓▒░░   ░░░░▒░▓░░░              
+                ░░░░░         ░░░░░ ░             
+               ░░░░ ░         ░░░░░ ░             
+                                              
+    MEDUSA
+        `,
+        robot: `
+                                                  
+                   ░░░░░░░░ ░                     
+                  ░░░░░░░░░░░                     
+                ░░░░░░░░░░░░░░                    
+                ░░░█████████▓░░░                  
+                ░░░█████████▓░░░░░░░░             
+                ░░░░░░▒▒▒▒▒▒░░░░░░░░              
+                  ░▒▒▒▒▒▒▒▒▒░░ ░▓░░░              
+                   ░░░░▓▓░░░░  ░░▒▒░              
+                ░░▒░░░░░░▒▒░▒░ ░░▒░░░             
+                ░░▒▒░░░░▒▒▒▒▓▓░░░▒░░              
+               ░░░▓░░░▒▒▒▒▒░░░▒░▒░░░              
+              ░░░▒▓░▒█▓▓▓▓▓░░░░░░░░               
+              ░░░▒░░░░███▓▒░░░                    
+              ░░░▒░▓▒▒▒▒▒▒▓▒░░░                   
+             ░░░░▒░▓▒▒▓▒▒▒▒▓░░                    
+             ░░░▓▒░░░▒░░░▒░░░                     
+             ░░█░░░░░░░  ▒░░░░                    
+              ░▒░░░▒▒▒░  ░▒▒░░                    
+              ░░░ ░▒▒░░  ░▒▒░░                    
+                  ░░░░░  ░░░░░                    
+                 ░░░░░░ ░▒░░░░░                   
+                ░░░░░░░░░░░░░░░                   
+                ░▒▓▒▓▓█▓░▓█▓▒▒▓░                  
+                ░░░░░░▒░░▒░░░░░░                  
+                ░░░░▒░░  ░░░░░░░                  
+                                                  
+    ROBOT
+        `,
+        "python-python": `
+                 ░▒█▒▓█░▒▒░█░▓▓▒░░█▓▒█▒░██░░░░    
+                ░▒███▒▒█▒█▒░▒▓▓░▒▒▓▒▓▓░█░░▓░░░    
+                ▒▓█▓▒▒█▓▓▓▓▓██▓░░▒▒░▒▒░▒██▒░░░    
+                ░▓▓▒██▓██████▒▒▒▒░▓▒▓▓▓▓▓▓░       
+                 ░▓▓▓███▓█▓▓█▒▒█████▓▓▓▓░░░░░░    
+                ░░░░░▓▓▓▒▒▒██▓▓██▒▒▓▓▓██▒▒▓░░░    
+           ░░░░▒▒▒▓█▒▒░░▒▓▓▓▓▒░░█▓▓▓███▒█▒▒▓▒░    
+           ░░█▒█▒▒██▒██▒▓▓░░░░▒▓▓▓▓▒▒█▓█▓▓▓█▒░    
+           ░▒█▒█▒░▒▒▒▓████▒▒███▓▓▓████▒▒░░▓▓▒░    
+           ░▓▓█▒▒█░░▒▓▓▓▓▓████████████████▓▓░░    
+           ░░▓█▓██▒░░░░▓▓▒▓▓▓█▒▒▒▒▒▒██▒▓▓▓▒░░░    
+           ░░░░▓█▒█░   ░░░▒▓▓█▓█▒▒▒▓▒▒▒▒▓░░       
+     ░░░░░▓▒████▓▓░░           ░ ░░░ ░            
+     ░░▓▓▓▓▒▒▒▒▓░░░░                              
+    ░░▓██▓▓▓░░░                                   
+   ░░█▒▓░▓░░                                      
+   ░▒▓▓░░░░░                                      
     PYTHON
-    `,
-    jacob: `
-      _
-     (O)
-    /|\\
-    / \\
-    JACOB
-    `,
-    beyblade: `
-    ═══╬═══
-   ═══╬╬╬═══
-    ═══╬═══
+        `,
+        jacob: `
+░░░░░░░░░░░░░░░░░░░▒▓▓▓▓▓▒▓▒▒░▒▒▒░░░▒▒▒▒▒▒░░░░░░░░
+░░░░░░░░░░░░░░░░░▒▒▓▒▓▒▒▒▒░░▒░░░░░░░░▒▒░░░░░░░░░░░
+░░░░░░░░░░░░░░░░▒▒▒▓▓▒▒░░░░░░░░░░░░░░▒▒░░░░░░░░░░░
+░░░░░░░░░░░░░░░░▒░░▒▒░░░░░░░░░░░░░░░░▒░▒░░░░░░░░░░
+░░░░░░░░░░░░░░░▒▒░░░░░░▒▒▓▓▓▓▓▓▓▓▓▓▒░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░▒▒▒▓█████▓█████▓▓▓▓▒░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░▒▓████████████▓▓▓▓░░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░░░░▒▓████▓▓▓▓█▓▓▓▒▒░▒▒░░░░░░░░░░░░░
+░░░░░░░░░░░░░░░▒▒░▓██▓▒▒▒▒▒▒▓▓▒▒▒░▒▒▓▒▒░░░░░░░░▒▒▒
+░░░░░░░░░░░░░░░▒▓▒▓█▓▒▒▓▒▓▒▒██▓▒▒▓▓▓▓▓▒░░░▒▒▒▓▓▒▓▒
+░░░░░░░░░░▒░░▒▒█▒▓▓████▓▓▓▓▓██▓▓▓▓▓▓▓▓▓▒▒▓▓▒▓▓▓▓▓▓
+░▒▒▒▒░░░░░░░░▒▒▒▓█▓█▓█████████▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓▓▓▓▒▒▒░░░░░░░░░░▒▓▓▓▓▓▓▓▓▓▒▒▒▒▓▓▒▓▒▒▓█▓▓▓▓▓▓▓▓▒▒▒
+▓▓▓▓▓▓▒░░░░░░░▒▒▒▒▓▒▓▓▓▓░▒▓▓▓▓▒▒▒▒▓▓▒███▓▓▓▓▓▓▒▒░░
+▓▓▓▓▒▒▒░░░░▒▒▒▓▓▓▓▓▓▒▓▓▓▓▓▓▓▒▒▓▒▓▓▒░████▓▓▒▒▒▒░░░░
+▒▒▒▒▒░░░▒▒▒▓▓▓▓▓▓▓██▒░▒▒▓▒▓▒░░▒▓▓▒░█████▓▒▒▒▒░░░░░
+▒░░░░░▒▒▒▓▓▓▓▓▓▓▓████▓▒░░▒▒▓▓▓▒▒▒░░░▒▒▓▓▓▒▒░░░░░░░
+▒▒▒▒▒▒▒▒▓▓▓██████████▓▓▒▒▒░░░░░░████▓▒▓▓▒▒░░░░░░░░
+▓▓▓▓▓▓▓▓▓▓█████████▓█▓▓▓▓▒▒▒▒▒▓▓███████▓▒░░░░░░░░░
+▓▓▓▓▓▓▓▓▓█████████████▓▓▓▓▓▓▓▓▓▓█████████▒░░░░░░░░
+▓▓▓▓▓▓▓█████████████████▓▓▓▓▒▒▓▓█████████▒░░░░░░░░
+▓▓▓▓▓█████████████████████████████████████░░░░░░░░
+▓▓▓███████████████████████████████████████░░░░░░░░
+▓█████████████████████████████████████████▒░░▒▒▒▒▒
+▓█████████████████████████████████████████▒░▒▒▒▒▒▒
+█████████████████████████████████████████▓▒░▒▒▒▒▒▒
+█████████████████████████████████████████▓▓░▒▒▒▒▒▒
+█████████████████████████████████████████▓▒▒▒▒▒▒▒▒
+█████████████████████████████████████████▓▓▒▒▓▓▒▒▒
+███████████▓███▓█████████████████████████▓▓▓▓▓▓▓▓▓
+████████████▓██▓██████████████████████████▓▓▓▓▓▓▓▓
+██████████▓█▓▓▓▓▓█████████████████████████▓▓▓▓▓▓▓▓
+█▓▓▒▒░▒█████▓▓▒▒▓████████████████████████▓▓▓▓▓▓▓▓▓
+█▓▓▓▓▓▓▓▓▒▒▒▓▓▒▓▓▓█▓▓████████████████████▓▓▓▓▓▓▓▓▓
+█▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓██▓▓███████████████▓▓▓▓▓▓▓▒▒
+▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓▓██▓██████████████▓▒▓▓▓▓▒▒░
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓███████▓▓███████████████▓▒▓▓▓▓▒░░
+▓▓▓▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓▓▓▓▓██████████████████▓▒▒▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓███████████████████████▓▓▒▓▓▓▓▓▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓██████▓▓████████████████▓▒▒▒▒▓▓▓▓
+▓▓▓▓▓▓▓▓▓▒▓▓▓▓▓▓████████████████████████▓▓▒▒▒▒▒▒▒▒
+ JACOB
+        `,
+        beyblade: `
+                           ░▒░▓░░░░░              
+                     ░░░░▒░░▒░░▓▓▓█░░             
+         ░░░█▓▓▒▓▓▓▓▓▓▓▓▓▓▓█▓░▒▒▒▒▓█▓▓▓░░░        
+       ░░▓░░▒▓▒▒▒▒░▒▒▒▒▒▒▒▒░░░▓▒▒▒▒▒██▓▓▓░░░░     
+   ░░░░▓▒▒▓▒▒░▒▒▒▒░░░▓░░░░░░░▒▒▒▒▒▒▒░░█▓▓▓▒░      
+   ░▓▒▒▒▓▓▓▒▒░▓▒██▒▓▓▒░▒░▒░▒▒▒▒▒▒▒░▒▓░▓░▓▓▓▓░     
+  ░░░░▒▓▓▓▒██▒████████░▓░█▒░████░░░░▒░░░▒░▓▓▓░    
+   ░▓░▓▓░▒███████████▓▓░░▓░░▓████████▓▓░▒░░░▓▓▒█  
+  ░▓▒░▓▒▓░█████████▓▒▒▒▓▒░░▒░▒▒█████▓███░░░▒░▓▓░░░
+ ░▓░░▓▒░░████████▓▒▒▓▒░▓▒██▓▒█▓░▓▒████████░▒▒▒▒░░░
+░░░░░▒░░░▓█▓████▒▒▓░▒█▒█▓▓▓▒▓█▓█░▓▒███▓█▒██░▒▒░░░░
+░░░░▒▒░▓░░▓▓████░▓▓▒█▓█▒▓▓▓█▓█▓▒▓░▓▓███▓█░▒░░▒░░▒░
+░░░░▒░▒▓░░░▓███░▓▒▒▓█▓▒█▓▓▓▓▓█▓█░█░▓███▓█░▒▒▒▒░░░░
+░░ ░▒▒▒░░░░████░▓▒█▒██▒▒▓▓▓▓▓█████░▒███▓▓▒▒▒▒▒░▒░░
+░░ ░▒▒░░░░░▓███▒▓▒░▒▒█░██▓▓▓█▒▓███▒▒███▓█▒▒▒▒░▒░  
+░▒░░▒▒▒▓░░░▒▒▒▒▒▒▒████░██▒█▒█▓▓▓▒▒▒░░░▒▒░▒▒▒▒▓░░  
+░░░▒▒▒░░▒▒░▒▒█▓▒▒▓██▒████▒▓█████▒░▒░░░▒▓▓▒▒▒▒▓    
+░░▒░▓░▓▓░▒▒▒▒▒▒▓█▓▓▒▒████████▒▓▓█░░░░░▓▓▒▒▓▒█░    
+  ░░░░▒▓▒▓▒▒▒▒██████▓▓▓▓▓▓▓▓▓▓█████░░░▓▒░▓▓▒░     
+      ░░▒░▓▓▒▓▓████▓█████████████▒░░░▒▒░▒▓█ ░     
+      ░░▓░▓▓▓▓▓███████████████░░░░░░▒▒░░░░░░░░    
+       ░░░▒▓▓▓▓▓▓▓▒▓█████████░░░░░▒▓▒░░░░▒▓▓░     
+         ░░▓▒▓▓▓▓▓▒░████▓█▒░░ ░█░▒▒▒▒▒█▓▓▓░ ░     
+           ░▒▒▒▓▓▓▓▒░░░░░░▒▒▓▓▓░▒▒▓▓▓▓▓░░░░       
+            ░░▓▓▒▒░▓▓▓▓▓▓▓▒▒▓▓▓▓▓▓▒▓▓░░           
+              ░  ▒▒▒░░▒░░▒▒▒▓▓▓▓▓▓░░░             
+                   ░░░░▓░     ░░░░                
     BEYBLADE
-    `,
-    default: `
+        `,
+        default: `
     O
-   /|\\
-   / \\
-    `
+ /|\\
+ / \\
+        `
 };
 
 // Initialize app
@@ -175,12 +453,17 @@ function setupEventListeners() {
     // Creature name input
     document.getElementById('creature-name').addEventListener('input', updateStartButton);
 
-    // Stat allocation buttons
+    // Stat allocation buttons (initial and level-up)
     document.querySelectorAll('.stat-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const stat = btn.dataset.stat;
             const change = parseInt(btn.dataset.change);
-            adjustStat(stat, change);
+            // If on level-up screen, use adjustLevelupStat, else use adjustStat
+            if (btn.closest('#levelup-screen')) {
+                adjustLevelupStat(stat, change);
+            } else {
+                adjustStat(stat, change);
+            }
         });
     });
 
@@ -198,14 +481,7 @@ function setupEventListeners() {
     // Next match button
     document.getElementById('next-match-btn').addEventListener('click', loadCurrentMatch);
 
-    // Level-up stat allocation buttons
-    document.querySelectorAll('.levelup-stat-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const stat = btn.dataset.stat;
-            const change = parseInt(btn.dataset.change);
-            adjustLevelupStat(stat, change);
-        });
-    });
+    // (No longer needed: levelup-stat-btn event listeners)
 
     // Continue tournament button
     document.getElementById('continue-tournament-btn').addEventListener('click', submitStatAllocations);
@@ -245,10 +521,16 @@ function adjustLevelupStat(stat, change) {
     const remaining = 3 - Object.values(gameState.levelupStatAllocations).reduce((a, b) => a + b, 0);
     document.getElementById('levelup-points-remaining').textContent = remaining;
     
-    // Update the new total display
-    const currentStatValue = parseInt(document.getElementById(`current-${stat}`).textContent);
-    const newTotal = currentStatValue + newValue;
-    document.getElementById(`new-${stat}-total`).textContent = newTotal;
+    // Update the new total display (only if element exists)
+    const currentStatElem = document.getElementById(`current-${stat}`);
+    if (currentStatElem) {
+        const currentStatValue = parseInt(currentStatElem.textContent);
+        const newTotalElem = document.getElementById(`new-${stat}-total`);
+        if (newTotalElem) {
+            const newTotal = currentStatValue + newValue;
+            newTotalElem.textContent = newTotal;
+        }
+    }
 
     // Enable continue button only when all 3 points are allocated
     const btn = document.getElementById('continue-tournament-btn');
@@ -324,9 +606,10 @@ async function createCreatureAndStartGame() {
             }
         }
 
-        // Switch to battle screen
-        switchScreen('battle-screen');
-        updateBattleDisplay();
+    // Switch to battle screen and ensure move buttons are enabled for first action
+    switchScreen('battle-screen');
+    ensureMoveButtonsEnabled();
+    updateBattleDisplay();
 
     } catch (error) {
         console.error('Error starting game:', error);
@@ -336,12 +619,22 @@ async function createCreatureAndStartGame() {
 
 // Submit move
 async function submitMove(moveType) {
+    // Decrement uses and update UI immediately
+    if (moveType === 'defend' && gameState.defendUses > 0) {
+        gameState.defendUses--;
+        document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+    }
+    if (moveType === 'special' && gameState.specialUses > 0) {
+        gameState.specialUses--;
+        document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
+    }
     if (!gameState.gameId || !gameState.creatureId) return;
 
     // Disable buttons
     document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = true);
 
     try {
+        const narratorStart = performance.now();
         const response = await fetch(`${API_BASE}/game/${gameState.gameId}/move`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -350,16 +643,13 @@ async function submitMove(moveType) {
                 move_type: moveType
             })
         });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: 'Unknown error' }));
-            console.error('Move submission failed:', errorData);
-            throw new Error(errorData.detail || 'Failed to submit move');
-        }
+        const narratorEnd = performance.now();
+        const narratorDuration = narratorEnd - narratorStart;
+        console.log(`[Narrator API] Response time: ${narratorDuration.toFixed(2)} ms`);
 
         const result = await response.json();
         gameState.currentMatch = result.current_match;
-        
+
         // Update opponent's creature type if available
         if (result.current_match) {
             gameState.creature2Type = result.current_match.creature2_type;
@@ -368,13 +658,28 @@ async function submitMove(moveType) {
         // Update display with results
         updateBattleDisplay(result.current_match?.latest_results);
 
+        // Display LLM narration in narrator box
+        const narratorBox = document.getElementById('narrator-message');
+        if (narratorBox) {
+            narratorBox.textContent = result.narration || '';
+        }
+
+        // Store last battle narration for victory/defeat/levelup screens
+        gameState.lastBattleNarration = result.last_battle_narration || result.narration || '';
+
         // Check if match is complete
         if (result.tournament_complete) {
             showVictoryScreen(result.champion_name);
         } else if (result.match_just_completed) {
             // A match just finished - check if player won or lost
             const playerWon = result.player_won_match;
-            
+
+            // Show narration on level-up screen
+            const levelupNarratorBox = document.getElementById('levelup-narrator-message');
+            if (levelupNarratorBox) {
+                levelupNarratorBox.textContent = gameState.lastBattleNarration;
+            }
+
             if (playerWon && result.stat_points_available > 0) {
                 // Player won - show level-up screen
                 showLevelUpScreen(result.current_stats);
@@ -389,19 +694,21 @@ async function submitMove(moveType) {
         } else {
             // Re-enable move buttons for next round
             setTimeout(() => {
-                document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+                ensureMoveButtonsEnabled();
             }, 1000);
         }
-
     } catch (error) {
         console.error('Error submitting move:', error);
         alert('Failed to submit move: ' + error.message);
-        document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
+        ensureMoveButtonsEnabled();
     }
 }
 
 // Update battle display
 function updateBattleDisplay(messages = []) {
+    // Update move uses UI
+    document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+    document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
     const match = gameState.currentMatch;
     if (!match) return;
 
@@ -438,16 +745,19 @@ function updateBattleDisplay(messages = []) {
     document.getElementById('p2-ascii').textContent = CREATURE_ASCII[p2Type] || CREATURE_ASCII.default;
 
     // Add messages to battle log
+    const logContainer = document.getElementById('battle-messages');
     if (messages && messages.length > 0) {
-        const logContainer = document.getElementById('battle-messages');
         messages.forEach(msg => {
             const msgDiv = document.createElement('div');
             msgDiv.className = 'battle-message';
             msgDiv.textContent = msg;
-            logContainer.appendChild(msgDiv);
+            logContainer.insertBefore(msgDiv, logContainer.firstChild);
         });
-        logContainer.scrollTop = logContainer.scrollHeight;
     }
+    // Always scroll to bottom after DOM update
+    setTimeout(() => {
+        logContainer.scrollTop = logContainer.scrollHeight * -1;
+    }, 0);
 }
 
 // Update HP bar
@@ -471,6 +781,15 @@ async function loadCurrentMatch() {
         const response = await fetch(`${API_BASE}/game/${gameState.gameId}/state`);
         const result = await response.json();
 
+        // Clear the levelup and victory narrator boxes so old narration doesn't persist
+        const narratorBox = document.getElementById('levelup-narrator-message');
+        if (narratorBox) narratorBox.textContent = '';
+        const victoryNarratorBox = document.getElementById('victory-narrator-message');
+        if (victoryNarratorBox) victoryNarratorBox.textContent = '';
+        // Also clear the main battle narrator box
+        const battleNarratorBox = document.getElementById('narrator-message');
+        if (battleNarratorBox) battleNarratorBox.textContent = '';
+
         console.log('Loading match:', result.current_match);
         console.log('Player name:', gameState.creatureName);
 
@@ -478,7 +797,6 @@ async function loadCurrentMatch() {
             showVictoryScreen(result.champion_name);
         } else {
             gameState.currentMatch = result.current_match;
-            
             // Update which creature is the player's in this match
             if (result.current_match) {
                 // The player's creature might be creature1 or creature2 depending on bracket
@@ -498,11 +816,14 @@ async function loadCurrentMatch() {
                 console.log('Player creature type:', gameState.creature1Type);
                 console.log('Opponent creature type:', gameState.creature2Type);
             }
-            
             document.getElementById('battle-messages').innerHTML = '';
+            // Reset move uses for new match
+            gameState.defendUses = 3;
+            gameState.specialUses = 1;
+            document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+            document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
             document.getElementById('next-match-btn').style.display = 'none';
             document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
-            
             // Switch to battle screen
             switchScreen('battle-screen');
             updateBattleDisplay();
@@ -520,8 +841,11 @@ function showLevelUpScreen(currentStats) {
     // Display current stats
     if (currentStats) {
         Object.keys(currentStats).forEach(stat => {
-            document.getElementById(`current-${stat}`).textContent = currentStats[stat];
-            document.getElementById(`new-${stat}-total`).textContent = currentStats[stat];
+            const currentStatElem = document.getElementById(`current-${stat}`);
+            if (currentStatElem) currentStatElem.textContent = currentStats[stat];
+            // Only update new-<stat>-total if it exists (for backward compatibility)
+            const newTotalElem = document.getElementById(`new-${stat}-total`);
+            if (newTotalElem) newTotalElem.textContent = currentStats[stat];
         });
     }
     
@@ -531,7 +855,8 @@ function showLevelUpScreen(currentStats) {
     });
     document.getElementById('levelup-points-remaining').textContent = '3';
     document.getElementById('continue-tournament-btn').disabled = true;
-    
+
+    // Narration already set in submitMove
     switchScreen('levelup-screen');
 }
 
@@ -564,14 +889,19 @@ async function submitStatAllocations() {
 
 // Show victory screen
 function showVictoryScreen(championName) {
+    // Reset move uses for new tournament
+    gameState.defendUses = 3;
+    gameState.specialUses = 1;
+    document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+    document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
     switchScreen('victory-screen');
     document.getElementById('champion-name').textContent = championName;
-    
+
     // Determine if player won or lost
     const playerWon = championName === gameState.creatureName;
     const asciiType = playerWon ? gameState.creature1Type : 'default';
     document.getElementById('champion-ascii').textContent = CREATURE_ASCII[asciiType] || CREATURE_ASCII.default;
-    
+
     // Update victory text based on result
     const victoryText = document.querySelector('.victory-text');
     if (playerWon) {
@@ -581,6 +911,14 @@ function showVictoryScreen(championName) {
         victoryText.textContent = 'Better luck next time!';
         victoryText.style.color = 'var(--danger-color)';
     }
+
+    // Show last narration in the victory narrator box if available
+    const victoryNarratorBox = document.getElementById('victory-narrator-message');
+    if (victoryNarratorBox && gameState.lastBattleNarration) {
+        victoryNarratorBox.textContent = gameState.lastBattleNarration;
+    } else if (victoryNarratorBox) {
+        victoryNarratorBox.textContent = '';
+    }
 }
 
 // Switch between screens
@@ -589,6 +927,20 @@ function switchScreen(screenId) {
         screen.classList.remove('active');
     });
     document.getElementById(screenId).classList.add('active');
+    // Always update move uses UI when showing battle screen
+    if (screenId === 'battle-screen') {
+        document.getElementById('defend-uses').textContent = `(${gameState.defendUses})`;
+        document.getElementById('special-uses').textContent = `(${gameState.specialUses})`;
+    }
+    // Toggle battle-only zoom
+    const battleScreen = document.getElementById('battle-screen');
+    if (battleScreen) {
+        if (screenId === 'battle-screen') {
+            battleScreen.classList.add('battle-zoom');
+        } else {
+            battleScreen.classList.remove('battle-zoom');
+        }
+    }
 }
 
 // Reset game
@@ -603,8 +955,12 @@ function resetGame() {
         gameId: null,
         currentMatch: null,
         creature1Type: null,
-        creature2Type: null
+        creature2Type: null,
+        defendUses: 3,
+        specialUses: 1
     };
+    document.getElementById('defend-uses').textContent = `(3)`;
+    document.getElementById('special-uses').textContent = `(1)`;
 
     // Reset UI
     document.getElementById('creature-name').value = '';
@@ -617,5 +973,20 @@ function resetGame() {
     document.getElementById('battle-messages').innerHTML = '';
     document.getElementById('next-match-btn').style.display = 'none';
 
+    // Clear narrator boxes
+    const victoryNarratorBox = document.getElementById('victory-narrator-message');
+    if (victoryNarratorBox) victoryNarratorBox.textContent = '';
+    const levelupNarratorBox = document.getElementById('levelup-narrator-message');
+    if (levelupNarratorBox) levelupNarratorBox.textContent = '';
+    const battleNarratorBox = document.getElementById('narrator-message');
+    if (battleNarratorBox) battleNarratorBox.textContent = '';
+
+    // Re-enable move buttons (may have been disabled at end of previous tournament)
+    ensureMoveButtonsEnabled();
     switchScreen('setup-screen');
+}
+
+// Ensure all move buttons are enabled (utility for new games / rounds / error recovery)
+function ensureMoveButtonsEnabled() {
+    document.querySelectorAll('.move-btn').forEach(btn => btn.disabled = false);
 }

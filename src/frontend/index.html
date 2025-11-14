@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pet Battler - Tournament Arena</title>
+    <title>Virtual Pet Battle Simulator</title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>🎮 PET BATTLER 🎮</h1>
+            <h1>🎮 Mythical Tournament 🎮</h1>
             <p class="subtitle">Epic Creature Tournament</p>
         </header>
 
@@ -97,6 +97,11 @@
                     </div>
                 </div>
 
+                <div class="narrator-box">
+                    <h3>Narrator</h3>
+                    <div id="narrator-message" class="narrator-message"></div>
+                </div>
+
                 <div class="battle-log">
                     <h3>Battle Log</h3>
                     <div id="battle-messages"></div>
@@ -127,49 +132,55 @@
             <div class="levelup-display">
                 <p class="levelup-message">You defeated your opponent!</p>
                 <p class="levelup-bonus">You gained <strong>3 stat points</strong> to allocate!</p>
-                
+
+                <!-- Narrator box for level-up screen -->
+                <div class="narrator-box">
+                    <h3>Narrator</h3>
+                    <div id="levelup-narrator-message" class="narrator-message"></div>
+                </div>
+
                 <div class="form-group">
                     <label>Allocate Your Stat Points (3 points available):</label>
                     <div class="stat-controls">
                         <div class="stat-row">
                             <span>⚡ Speed: <strong id="current-speed">0</strong></span>
-                            <button class="levelup-stat-btn" data-stat="speed" data-change="-1">-</button>
+                            <button class="stat-btn" data-stat="speed" data-change="-1">-</button>
                             <span id="levelup-speed-value">0</span>
-                            <button class="levelup-stat-btn" data-stat="speed" data-change="1">+</button>
-                            <span class="new-total"> → <span id="new-speed-total">0</span></span>
+                            <button class="stat-btn" data-stat="speed" data-change="1">+</button>
+                            <!-- Removed arrow and new total display -->
                         </div>
                         <div class="stat-row">
                             <span>❤️ Health: <strong id="current-health">0</strong></span>
-                            <button class="levelup-stat-btn" data-stat="health" data-change="-1">-</button>
+                            <button class="stat-btn" data-stat="health" data-change="-1">-</button>
                             <span id="levelup-health-value">0</span>
-                            <button class="levelup-stat-btn" data-stat="health" data-change="1">+</button>
-                            <span class="new-total"> → <span id="new-health-total">0</span></span>
+                            <button class="stat-btn" data-stat="health" data-change="1">+</button>
+                            <!-- Removed arrow and new total display -->
                         </div>
                         <div class="stat-row">
                             <span>🛡️ Defense: <strong id="current-defense">0</strong></span>
-                            <button class="levelup-stat-btn" data-stat="defense" data-change="-1">-</button>
+                            <button class="stat-btn" data-stat="defense" data-change="-1">-</button>
                             <span id="levelup-defense-value">0</span>
-                            <button class="levelup-stat-btn" data-stat="defense" data-change="1">+</button>
-                            <span class="new-total"> → <span id="new-defense-total">0</span></span>
+                            <button class="stat-btn" data-stat="defense" data-change="1">+</button>
+                            <!-- Removed arrow and new total display -->
                         </div>
                         <div class="stat-row">
                             <span>💪 Strength: <strong id="current-strength">0</strong></span>
-                            <button class="levelup-stat-btn" data-stat="strength" data-change="-1">-</button>
+                            <button class="stat-btn" data-stat="strength" data-change="-1">-</button>
                             <span id="levelup-strength-value">0</span>
-                            <button class="levelup-stat-btn" data-stat="strength" data-change="1">+</button>
-                            <span class="new-total"> → <span id="new-strength-total">0</span></span>
+                            <button class="stat-btn" data-stat="strength" data-change="1">+</button>
+                            <!-- Removed arrow and new total display -->
                         </div>
                         <div class="stat-row">
                             <span>🍀 Luck: <strong id="current-luck">0</strong></span>
-                            <button class="levelup-stat-btn" data-stat="luck" data-change="-1">-</button>
+                            <button class="stat-btn" data-stat="luck" data-change="-1">-</button>
                             <span id="levelup-luck-value">0</span>
-                            <button class="levelup-stat-btn" data-stat="luck" data-change="1">+</button>
-                            <span class="new-total"> → <span id="new-luck-total">0</span></span>
+                            <button class="stat-btn" data-stat="luck" data-change="1">+</button>
+                            <!-- Removed arrow and new total display -->
                         </div>
                     </div>
                     <p class="points-remaining">Points Remaining: <span id="levelup-points-remaining">3</span></p>
                 </div>
-                
+
                 <button id="continue-tournament-btn" class="btn-primary" disabled>Continue to Next Match</button>
             </div>
         </div>
@@ -181,6 +192,11 @@
                 <h3 id="champion-name">...</h3>
                 <pre id="champion-ascii" class="ascii-art">...</pre>
                 <p class="victory-text">IS THE CHAMPION!</p>
+            </div>
+            <!-- Narrator box for victory screen -->
+            <div class="narrator-box">
+                <h3>Narrator</h3>
+                <div id="victory-narrator-message" class="narrator-message"></div>
             </div>
             <button id="new-game-btn" class="btn-primary">Start New Tournament</button>
         </div>

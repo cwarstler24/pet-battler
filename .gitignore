@@ -21,12 +21,14 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+pyrightconfig.json
 
 # Virtual Environment
 venv/
 env/
 ENV/
 .venv
+.env
 
 # IDE
 .vscode/
