@@ -5,6 +5,7 @@ API routes for game flow and tournament management.
 from typing import List
 from fastapi import APIRouter, HTTPException
 from ..logic.narrator import NarratorAgent
+from ..logic.fast_narrator import FastNarrator
 from pydantic import BaseModel
 from ..models.game_state import GameState, TournamentBracket
 from ..models.move import Move, MoveType
@@ -15,6 +16,26 @@ from ..logic.ai_opponent import AIOpponentGenerator
 router = APIRouter(prefix="/game", tags=["game"])
 
 games_db = {}
+
+# Choose narrator type:
+# - FastNarrator: instant (<0.001s), template-based
+# - NarratorAgent: 1-4s, AI-generated (more varied)
+USE_FAST_NARRATOR = False  # Set to False to use AI model
+
+# Global narrator instance - reuse across requests for speed
+_narrator_instance = None
+_fast_narrator = FastNarrator()
+
+def get_narrator():
+    """Get or create the narrator instance."""
+    global _narrator_instance
+    
+    if USE_FAST_NARRATOR:
+        return _fast_narrator
+    
+    if _narrator_instance is None:
+        _narrator_instance = NarratorAgent()
+    return _narrator_instance
 
 
 class StartGameRequest(BaseModel):
@@ -118,8 +139,8 @@ async def start_game(request: StartGameRequest):
 
 @router.post("/{game_id}/move")
 async def submit_move(game_id: str, request: SubmitMoveRequest):
-    narrator = NarratorAgent(model="gpt-4-1106-preview")
     """Submit a move for a creature in the current match."""
+    narrator = get_narrator()  # Reuse global instance for speed
 
     if game_id not in games_db:
         raise HTTPException(status_code=404, detail="Game not found")
